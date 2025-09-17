@@ -1,0 +1,47 @@
+# -----------------------
+# Frontend (Vite + React)
+# -----------------------
+node_modules/
+dist/
+build/
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# -----------------------
+# Backend (ASP.NET Core)
+# -----------------------
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET publish folders
+wwwroot/
+publish/
+
+# Rider / VS Code / Visual Studio
+*.rsuser
+*.vsp
+*.vspscc
+.vs/
+
+# Local test results
+TestResult*/
+*.coverage
+*.coveragexml
