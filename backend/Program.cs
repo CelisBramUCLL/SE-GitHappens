@@ -2,7 +2,9 @@ using Backend.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Variables
-var allowedOrigins = builder.Configuration["AllowedOrigins"] ?? [];
+var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
 var apiVersion = builder.Configuration["ApiVersion"] ?? "v1";
 var basePath = $"/api/{apiVersion}";
 
