@@ -1,4 +1,5 @@
 ﻿using Dotnet_test.Domain;
+using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Session;
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -82,6 +83,18 @@ namespace Dotnet_test.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        // POST: api/session/leave
+        [HttpPost("leave")]
+        public async Task<ActionResult<ParticipantInSessionDTO>> LeaveSession(
+            [FromBody] LeaveSessionDTO dto
+        )
+        {
+            var participant = await _sessionRepository.LeaveSession(dto);
+            if (participant == null)
+                return NotFound(new { message = "Participant not found" });
+            return Ok(participant);
         }
     }
 }
