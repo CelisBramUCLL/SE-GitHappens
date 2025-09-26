@@ -1,5 +1,6 @@
 ﻿using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
+using Dotnet_test.DTOs.Playlist;
 using Dotnet_test.DTOs.User;
 
 namespace Dotnet_test.DTOs.Session
@@ -14,6 +15,8 @@ namespace Dotnet_test.DTOs.Session
 
         // Host user (FK)
         public HostUserDTO HostUser { get; set; }
+
+        public PlaylistDTO Playlist { get; set; }
 
         public List<ParticipantInSessionDTO> Participants { get; set; } =
             new List<ParticipantInSessionDTO>();
