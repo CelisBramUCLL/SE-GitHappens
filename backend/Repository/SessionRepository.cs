@@ -85,28 +85,90 @@ namespace Dotnet_test.Repository
                 .ToListAsync();
         }
 
-        public async Task<Session?> GetById(int id)
+        public async Task<SessionDTO?> GetById(int id)
         {
-            return await _context
+            var session = await _context
                 .Sessions.Include(s => s.HostUser)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .Include(s => s.Participants)
+                .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (session == null)
+                return null;
+
+            var sessionDto = new SessionDTO
+            {
+                Id = session.Id,
+                Name = session.Name,
+                Status = session.Status,
+                CreatedAt = session.CreatedAt,
+                UpdatedAt = session.UpdatedAt,
+                HostUser = new HostUserDTO
+                {
+                    Id = session.HostUser.Id,
+                    Username = session.HostUser.Username,
+                },
+                Participants = session
+                    .Participants.Select(p => new ParticipantInSessionDTO
+                    {
+                        Id = p.Id,
+                        UserId = p.UserId,
+                        JoinedAt = p.JoinedAt,
+                        UserName = p.User.Username,
+                    })
+                    .ToList(),
+            };
+
+            return sessionDto;
         }
 
-        public async Task<Session?> Update(Session session, UpdateSessionDTO request)
+        public async Task<SessionDTO?> Update(Session session, UpdateSessionDTO request)
         {
-            var sessionInDb = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
+            var sessionInDb = await _context
+                .Sessions.Include(s => s.HostUser)
+                .Include(s => s.Participants)
+                .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(x => x.Id == session.Id);
+
             if (sessionInDb == null)
                 return null;
 
+            // Update properties
             if (request.Name != null)
                 sessionInDb.Name = request.Name;
+
             if (request.Status != null)
                 sessionInDb.Status = request.Status.Value;
 
             sessionInDb.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return sessionInDb;
+
+            // Map to DTO
+            var sessionDto = new SessionDTO
+            {
+                Id = sessionInDb.Id,
+                Name = sessionInDb.Name,
+                Status = sessionInDb.Status,
+                CreatedAt = sessionInDb.CreatedAt,
+                UpdatedAt = sessionInDb.UpdatedAt,
+                HostUser = new HostUserDTO
+                {
+                    Id = sessionInDb.HostUser.Id,
+                    Username = sessionInDb.HostUser.Username,
+                },
+                Participants = sessionInDb
+                    .Participants.Select(p => new ParticipantInSessionDTO
+                    {
+                        Id = p.Id,
+                        UserId = p.UserId,
+                        JoinedAt = p.JoinedAt,
+                        UserName = p.User.Username,
+                    })
+                    .ToList(),
+            };
+
+            return sessionDto;
         }
 
         public async Task<ParticipantDTO> JoinSession(JoinSessionDTO dto)

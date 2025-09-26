@@ -8,11 +8,11 @@ namespace Dotnet_test.Interfaces
     {
         Task<List<SessionDTO>> GetAll();
 
-        Task<Session?> GetById(int id);
+        Task<SessionDTO?> GetById(int id);
 
         Task<SessionDTO> Create(Session session);
 
-        Task<Session?> Update(Session session, UpdateSessionDTO request);
+        Task<SessionDTO?> Update(Session session, UpdateSessionDTO request);
 
         Task<bool> Delete(int id);
         Task<ParticipantDTO> JoinSession(JoinSessionDTO dto);
