@@ -1,6 +1,8 @@
 ﻿using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Product;
+using Dotnet_test.DTOs.User;
 using Dotnet_test.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dotnet_test.Controllers
@@ -17,6 +19,7 @@ namespace Dotnet_test.Controllers
         }
 
         // full list
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -26,6 +29,7 @@ namespace Dotnet_test.Controllers
         }
 
         // single by Id
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
         {
@@ -43,7 +47,7 @@ namespace Dotnet_test.Controllers
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 Email = request.Email,
-                PasswordHash = request.Password,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password), // Hash the password here
                 Username = request.Username,
                 Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
                     ? parsedRole
@@ -56,6 +60,7 @@ namespace Dotnet_test.Controllers
         }
 
         // update
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDTO request)
         {
@@ -81,6 +86,7 @@ namespace Dotnet_test.Controllers
         }
 
         // delete by Id
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -90,6 +96,17 @@ namespace Dotnet_test.Controllers
                 return NotFound($"User with id {id} not found");
 
             return Ok($"User with id {id} deleted");
+        }
+
+        // Login
+        [HttpPost("login")]
+        public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginDTO dto)
+        {
+            var result = await _userRepository.Login(dto);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid username or password" });
+
+            return Ok(result);
         }
     }
 }

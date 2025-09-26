@@ -2,6 +2,7 @@
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Session;
 using Dotnet_test.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dotnet_test.Controllers
@@ -33,11 +34,16 @@ namespace Dotnet_test.Controllers
             return Ok(session);
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateSessionDto dto)
         {
-            // TODO: Replace with actual userId from authentication
-            int userId = 4;
+            // Get the logged-in user ID from JWT token
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("User ID not found in token");
+
+            int userId = int.Parse(userIdClaim.Value);
 
             var session = new Session
             {
@@ -52,6 +58,7 @@ namespace Dotnet_test.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdSession.Id }, createdSession);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateSessionDTO dto)
         {
@@ -62,6 +69,7 @@ namespace Dotnet_test.Controllers
             return Ok(updated);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -71,12 +79,20 @@ namespace Dotnet_test.Controllers
             return Ok($"Session with id {id} deleted");
         }
 
+        [Authorize]
         [HttpPost("join")]
         public async Task<IActionResult> JoinSession([FromBody] JoinSessionDTO dto)
         {
             try
             {
-                var participant = await _sessionRepository.JoinSession(dto);
+                // Get logged-in user ID from JWT
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized("User ID not found in token");
+
+                int loggedInUserId = int.Parse(userIdClaim.Value);
+
+                var participant = await _sessionRepository.JoinSession(dto, loggedInUserId);
                 return Ok(participant);
             }
             catch (Exception ex)
@@ -85,15 +101,23 @@ namespace Dotnet_test.Controllers
             }
         }
 
-        // POST: api/session/leave
+        [Authorize]
         [HttpPost("leave")]
         public async Task<ActionResult<ParticipantInSessionDTO>> LeaveSession(
             [FromBody] LeaveSessionDTO dto
         )
         {
-            var participant = await _sessionRepository.LeaveSession(dto);
+            // Get logged-in user ID from JWT
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("User ID not found in token");
+
+            int loggedInUserId = int.Parse(userIdClaim.Value);
+
+            var participant = await _sessionRepository.LeaveSession(dto.SessionId, loggedInUserId);
             if (participant == null)
                 return NotFound(new { message = "Participant not found" });
+
             return Ok(participant);
         }
     }
