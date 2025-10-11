@@ -1,6 +1,6 @@
 ﻿using Dotnet_test.Domain;
 
-namespace Dotnet_test.DTOs.Product
+namespace Dotnet_test.DTOs.User
 {
     public class UserDTO
     {

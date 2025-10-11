@@ -8,7 +8,7 @@ namespace Dotnet_test.Infrastructure
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
-        //DbSets for new application entities
+        //DbSets for application entities
         public DbSet<User> Users { get; set; }
         public DbSet<Session> Sessions { get; set; }
         public DbSet<Participant> Participants { get; set; }
@@ -34,7 +34,7 @@ namespace Dotnet_test.Infrastructure
                 .HasOne(p => p.User)
                 .WithMany(u => u.SessionsJoined)
                 .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // <-- NO cascade
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Deleting a session deletes participants in that session
             modelBuilder
@@ -50,7 +50,7 @@ namespace Dotnet_test.Infrastructure
                 .HasOne(ps => ps.AddedByUser)
                 .WithMany(u => u.AddedPlaylistSongs)
                 .HasForeignKey(ps => ps.AddedByUserId)
-                .OnDelete(DeleteBehavior.Restrict); // NO cascade
+                .OnDelete(DeleteBehavior.Restrict);
 
             // PlaylistSongs → Playlist
             modelBuilder
@@ -58,7 +58,7 @@ namespace Dotnet_test.Infrastructure
                 .HasOne(ps => ps.Playlist)
                 .WithMany(p => p.Songs)
                 .HasForeignKey(ps => ps.PlaylistId)
-                .OnDelete(DeleteBehavior.Cascade); // keep cascade here
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

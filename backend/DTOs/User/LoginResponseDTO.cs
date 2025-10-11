@@ -4,6 +4,6 @@ namespace Dotnet_test.DTOs.User
     {
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
-        public string Token { get; set; } = string.Empty; // JWT token
+        public string Token { get; set; } = string.Empty;
     }
 }

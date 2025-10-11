@@ -1,21 +1,20 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text; // Fixes CS0103: Encoding
+using System.Text;
 using Dotnet_test.Domain;
-using Dotnet_test.DTOs.Product;
 using Dotnet_test.DTOs.User;
 using Dotnet_test.Infrastructure;
 using Dotnet_test.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration; // Needed for IConfiguration
-using Microsoft.IdentityModel.Tokens; // Fixes CS0246: SymmetricSecurityKey
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Dotnet_test.Repository
 {
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _configuration; // Fixes CS0103: _configuration
+        private readonly IConfiguration _configuration;
 
         public UserRepository(ApplicationDbContext context, IConfiguration configuration)
         {
@@ -34,35 +33,35 @@ namespace Dotnet_test.Repository
         {
             // Include all relevant navigation properties
             var user = await _context
-                .Users.Include(u => u.SessionsJoined) // participant entries
+                .Users.Include(u => u.SessionsJoined)
                 .Include(u => u.HostedSessions)
-                .ThenInclude(s => s.Participants) // participants in hosted sessions
-                .Include(u => u.AddedPlaylistSongs) // songs user added to playlists
-                .ThenInclude(p => p.Song) // songs in hosted playlists
+                .ThenInclude(s => s.Participants)
+                .Include(u => u.AddedPlaylistSongs)
+                .ThenInclude(p => p.Song)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
                 return false;
 
-            // 1️⃣ Remove participant entries where the user is just a participant
+            // Remove participant entries where the user is just a participant
             if (user.SessionsJoined != null && user.SessionsJoined.Any())
             {
                 _context.Participants.RemoveRange(user.SessionsJoined);
             }
 
-            // 2️⃣ Delete hosted sessions (participants cascade)
+            // Delete hosted sessions (participants cascade)
             if (user.HostedSessions != null && user.HostedSessions.Any())
             {
                 _context.Sessions.RemoveRange(user.HostedSessions);
             }
 
-            // 3️⃣ Remove playlist songs the user added
+            // Remove playlist songs the user added
             if (user.AddedPlaylistSongs != null && user.AddedPlaylistSongs.Any())
             {
                 _context.PlaylistSongs.RemoveRange(user.AddedPlaylistSongs);
             }
 
-            // 5️⃣ Finally delete the user
+            // Finally delete the user
             _context.Users.Remove(user);
 
             await _context.SaveChangesAsync();
@@ -117,7 +116,7 @@ namespace Dotnet_test.Repository
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return null;
 
-            // Generate JWT
+            // Generate JWT token
             var token = GenerateJwtToken(user);
 
             return new LoginResponseDTO
@@ -128,7 +127,7 @@ namespace Dotnet_test.Repository
             };
         }
 
-        // Helper for JWT
+        // JWT token generation method
         private string GenerateJwtToken(User user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

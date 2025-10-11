@@ -40,6 +40,7 @@ builder.Services.AddCors(p =>
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+builder.Services.AddScoped<ISongRepository, SongRepository>();
 
 // Add JWT Authentication
 builder

@@ -7,7 +7,6 @@ namespace Dotnet_test.DTOs.Playlist
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
 
-        // Songs in the playlist
         public List<SongDTO> Songs { get; set; } = new List<SongDTO>();
     }
 }
