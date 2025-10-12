@@ -1,9 +1,4 @@
-using System.Text.Json.Serialization;
-using Dotnet_test.Infrastructure;
-using Dotnet_test.Interfaces;
-using Dotnet_test.Repository;
-using Microsoft.EntityFrameworkCore;
-
+using Backend.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -36,11 +31,34 @@ builder
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+});
+
+// Add JWT Authentication
+builder
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+            ),
+        };
+    });
     
 // register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-
 
 var app = builder.Build();
 

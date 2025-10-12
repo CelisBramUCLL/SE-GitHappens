@@ -1,18 +1,26 @@
-﻿using Dotnet_test.Domain;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text; // Fixes CS0103: Encoding
+using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Product;
+using Dotnet_test.DTOs.User;
 using Dotnet_test.Infrastructure;
 using Dotnet_test.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration; // Needed for IConfiguration
+using Microsoft.IdentityModel.Tokens; // Fixes CS0246: SymmetricSecurityKey
 
 namespace Dotnet_test.Repository
 {
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration; // Fixes CS0103: _configuration
 
-        public UserRepository(ApplicationDbContext context)
+        public UserRepository(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public async Task<User> Create(User user)
@@ -86,7 +94,7 @@ namespace Dotnet_test.Repository
             if (request.Email != null)
                 userInDb.Email = request.Email;
             if (request.Password != null)
-                userInDb.PasswordHash = request.Password;
+                userInDb.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
             if (request.Username != null)
                 userInDb.Username = request.Username;
 
@@ -97,6 +105,50 @@ namespace Dotnet_test.Repository
 
             await _context.SaveChangesAsync();
             return userInDb;
+        }
+
+        public async Task<LoginResponseDTO?> Login(LoginDTO dto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == dto.Username);
+            if (user == null)
+                return null;
+
+            // Verify password
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+                return null;
+
+            // Generate JWT
+            var token = GenerateJwtToken(user);
+
+            return new LoginResponseDTO
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Token = token,
+            };
+        }
+
+        // Helper for JWT
+        private string GenerateJwtToken(User user)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+            };
+
+            var token = new JwtSecurityToken(
+                _configuration["Jwt:Issuer"],
+                _configuration["Jwt:Audience"],
+                claims,
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

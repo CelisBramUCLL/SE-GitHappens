@@ -1,5 +1,6 @@
 ﻿using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Product;
+using Dotnet_test.DTOs.User;
 
 namespace Dotnet_test.Interfaces
 {
@@ -10,5 +11,6 @@ namespace Dotnet_test.Interfaces
         Task<User> Create(User user);
         Task<User?> Update(User user, UpdateUserDTO request);
         Task<bool> Delete(int id);
+        Task<LoginResponseDTO?> Login(LoginDTO dto);
     }
 }

@@ -171,23 +171,22 @@ namespace Dotnet_test.Repository
             return sessionDto;
         }
 
-        public async Task<ParticipantDTO> JoinSession(JoinSessionDTO dto)
+        public async Task<ParticipantDTO> JoinSession(JoinSessionDTO dto, int loggedInUserId)
         {
             // 1️⃣ Check if session exists
             var session = await _context
-                .Sessions.Include(s => s.Participants) // include existing participants
+                .Sessions.Include(s => s.Participants)
                 .FirstOrDefaultAsync(s => s.Id == dto.SessionId);
 
             if (session == null)
                 throw new Exception("Session not found");
 
             // 2️⃣ Check if user is already a participant
-            if (session.Participants.Any(p => p.UserId == dto.UserId))
+            if (session.Participants.Any(p => p.UserId == loggedInUserId))
                 throw new Exception("User already joined this session");
 
-            // 3️⃣ Load the user separately
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.UserId);
-
+            // 3️⃣ Load the user
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == loggedInUserId);
             if (user == null)
                 throw new Exception("User not found");
 
@@ -195,7 +194,7 @@ namespace Dotnet_test.Repository
             var participant = new Participant
             {
                 SessionId = dto.SessionId,
-                UserId = dto.UserId,
+                UserId = loggedInUserId,
                 JoinedAt = DateTime.UtcNow,
             };
 
@@ -215,12 +214,12 @@ namespace Dotnet_test.Repository
             return participantDto;
         }
 
-        public async Task<ParticipantInSessionDTO?> LeaveSession(LeaveSessionDTO dto)
+        public async Task<ParticipantInSessionDTO?> LeaveSession(int sessionId, int loggedInUserId)
         {
             // Find the participant entry for the given user and session
             var participant = await _context
                 .Participants.Include(p => p.User) // include user to get Username
-                .FirstOrDefaultAsync(p => p.SessionId == dto.SessionId && p.UserId == dto.UserId);
+                .FirstOrDefaultAsync(p => p.SessionId == sessionId && p.UserId == loggedInUserId);
 
             if (participant == null)
                 return null; // user is not part of the session

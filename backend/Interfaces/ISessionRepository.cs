@@ -15,7 +15,7 @@ namespace Dotnet_test.Interfaces
         Task<SessionDTO?> Update(Session session, UpdateSessionDTO request);
 
         Task<bool> Delete(int id);
-        Task<ParticipantDTO> JoinSession(JoinSessionDTO dto);
-        Task<ParticipantInSessionDTO?> LeaveSession(LeaveSessionDTO dto);
+        Task<ParticipantDTO> JoinSession(JoinSessionDTO dto, int loggedInUserId);
+        Task<ParticipantInSessionDTO?> LeaveSession(int sessionId, int loggedInUserId);
     }
 }
