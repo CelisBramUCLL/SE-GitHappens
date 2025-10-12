@@ -40,7 +40,7 @@ namespace Dotnet_test.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateSessionDto dto)
         {
-            // Get the logged-in user ID from JWT token
+            // Get logged-in user ID from JWT token
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
                 return Unauthorized("User ID not found in token");
@@ -87,7 +87,7 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user ID from JWT
+                // Get logged-in user ID from JWT token
                 var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
                     return Unauthorized("User ID not found in token");
@@ -109,7 +109,7 @@ namespace Dotnet_test.Controllers
             [FromBody] LeaveSessionDTO dto
         )
         {
-            // Get logged-in user ID from JWT
+            // Get logged-in user ID from JWT token
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
                 return Unauthorized("User ID not found in token");
@@ -131,7 +131,7 @@ namespace Dotnet_test.Controllers
             {
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-                // The repository will find the active session for this user automatically
+                // Find the active session for this user automatically
                 var playlistSongDto = await _sessionRepository.AddSongToCurrentSession(userId, dto);
 
                 return Ok(playlistSongDto);
@@ -148,7 +148,7 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user id from JWT
+                // Get logged-in user ID from JWT token
                 int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
                 var removedSong = await _sessionRepository.RemoveSongFromCurrentSession(

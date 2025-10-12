@@ -1,5 +1,4 @@
 ﻿using Dotnet_test.Domain;
-using Dotnet_test.DTOs.Product;
 using Dotnet_test.DTOs.User;
 
 namespace Dotnet_test.Interfaces

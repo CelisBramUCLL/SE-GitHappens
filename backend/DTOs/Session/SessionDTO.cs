@@ -13,7 +13,6 @@ namespace Dotnet_test.DTOs.Session
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Host user (FK)
         public HostUserDTO HostUser { get; set; }
 
         public PlaylistDTO Playlist { get; set; }

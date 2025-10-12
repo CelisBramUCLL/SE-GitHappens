@@ -1,5 +1,4 @@
 ﻿using Dotnet_test.Domain;
-using Dotnet_test.DTOs.Product;
 using Dotnet_test.DTOs.User;
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -18,7 +17,7 @@ namespace Dotnet_test.Controllers
             _userRepository = userRepository;
         }
 
-        // full list
+        // Get all users
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -28,7 +27,7 @@ namespace Dotnet_test.Controllers
             return Ok(response);
         }
 
-        // single by Id
+        // Get user by ID
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
@@ -38,7 +37,7 @@ namespace Dotnet_test.Controllers
             return Ok(response);
         }
 
-        // create
+        // Create new user
         [HttpPost]
         public async Task<IActionResult> CreateUser(CreateUserDTO request)
         {
@@ -47,11 +46,11 @@ namespace Dotnet_test.Controllers
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password), // Hash the password here
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 Username = request.Username,
                 Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
                     ? parsedRole
-                    : Role.User, // fallback to Role.User if parsing fails
+                    : Role.User,
             };
 
             var created = await _userRepository.Create(newUser);
@@ -59,7 +58,7 @@ namespace Dotnet_test.Controllers
             return Ok(created);
         }
 
-        // update
+        // Update user
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDTO request)
@@ -74,7 +73,7 @@ namespace Dotnet_test.Controllers
                 Username = request.Username,
                 Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
                     ? parsedRole
-                    : Role.User, // fallback to Role.User if parsing fails
+                    : Role.User,
             };
 
             var updated = await _userRepository.Update(userToUpdate, request);
@@ -85,7 +84,7 @@ namespace Dotnet_test.Controllers
             return Ok(updated);
         }
 
-        // delete by Id
+        // Delete user by ID
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
@@ -98,7 +97,7 @@ namespace Dotnet_test.Controllers
             return Ok($"User with id {id} deleted");
         }
 
-        // Login
+        // User login
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginDTO dto)
         {

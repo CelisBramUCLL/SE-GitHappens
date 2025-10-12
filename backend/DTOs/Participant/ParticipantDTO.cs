@@ -9,7 +9,6 @@ namespace Dotnet_test.DTOs.Participant
         public int SessionId { get; set; }
         public DateTime JoinedAt { get; set; }
 
-        // Optional: include minimal user info if needed
         public HostUserDTO? User { get; set; }
     }
 }
