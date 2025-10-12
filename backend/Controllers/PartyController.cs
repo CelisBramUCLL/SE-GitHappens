@@ -185,6 +185,32 @@ namespace Dotnet_test.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("my-active-party")]
+        public async Task<IActionResult> GetMyActiveParty()
+        {
+            try
+            {
+                // Get logged-in user ID from JWT token
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized("User ID not found in token");
+
+                int loggedInUserId = int.Parse(userIdClaim.Value);
+
+                var activeParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
+                
+                if (activeParty == null)
+                    return Ok(new { hasActiveParty = false, party = (object)null });
+                
+                return Ok(new { hasActiveParty = true, party = activeParty });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         // TODO: Add remaining methods (Update, Delete, Join, Leave, AddSong, RemoveSong)
         // These will be implemented as we continue the conversion
     }

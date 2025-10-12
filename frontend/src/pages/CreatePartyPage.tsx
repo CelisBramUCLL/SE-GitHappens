@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 export const CreatePartyPage: React.FC = () => {
   const [partyName, setPartyName] = useState('');
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
-  const queryClient = useQueryClient();	
+  const queryClient = useQueryClient();
+
+  // Check if user already has an active party
+  const { data: activePartyData, isLoading: isCheckingActiveParty } = useQuery({
+    queryKey: ['my-active-party'],
+    queryFn: () => partyService.getMyActiveParty(),
+  });
 
   const createPartyMutation = useMutation({
     mutationFn: (data: { name: string }) => partyService.create(data),
     onSuccess: (party: any) => {
       queryClient.invalidateQueries({ queryKey: ['parties'] });
+      queryClient.invalidateQueries({ queryKey: ['my-active-party'] });
       navigate(`/parties/${party.id}`);
     },
     onError: (error) => {
@@ -48,8 +55,40 @@ export const CreatePartyPage: React.FC = () => {
             Back
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Create New Party</h1>
-          <p className="text-gray-600">Start a new collaborative music party</p>
+          <p className="text-gray-600">Start a collaborative music experience</p>
         </div>
+
+        {isCheckingActiveParty ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (activePartyData as any)?.hasActiveParty ? (
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <AlertCircle className="h-6 w-6 text-amber-500 mr-3" />
+              <h2 className="text-lg font-medium text-gray-900">You already have an active party</h2>
+            </div>
+            <p className="text-gray-600 mb-4">
+              You can only have one active party at a time. You're currently {(activePartyData as any).party.hostUser.username === (activePartyData as any).party.hostUser.username ? 'hosting' : 'participating in'} 
+              the party "<strong>{(activePartyData as any).party.name}</strong>".
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                onClick={() => navigate(`/parties/${(activePartyData as any).party.id}`)}
+                className="flex-1"
+              >
+                Go to Your Active Party
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/parties')}
+                className="flex-1"
+              >
+                View All Parties
+              </Button>
+            </div>
+          </div>
+        ) : (
 
         <div className="bg-white shadow rounded-lg">
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -104,6 +143,7 @@ export const CreatePartyPage: React.FC = () => {
             </div>
           </form>
         </div>
+        )}
       </div>
     </Layout>
   );

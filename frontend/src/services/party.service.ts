@@ -86,6 +86,14 @@ export class PartyService extends BaseService {
     });
     return this.handleResponse(response);
   }
+
+  // Get user's current active party (if any)
+  async getMyActiveParty() {
+    const response = await fetch(this.buildUrl('/party/my-active-party'), {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export const partyService = new PartyService();

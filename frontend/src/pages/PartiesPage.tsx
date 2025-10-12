@@ -20,6 +20,7 @@ export const PartiesPage: React.FC = () => {
     mutationFn: (partyId: number) => partyService.join(partyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['parties'] });
+      queryClient.invalidateQueries({ queryKey: ['my-active-party'] });
     },
   });
 
@@ -27,7 +28,14 @@ export const PartiesPage: React.FC = () => {
     try {
       await joinPartyMutation.mutateAsync(partyId);
     } catch (error) {
-      console.error('Failed to join party:', error);
+      // Show user-friendly error message for common constraint violations
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join party';
+      
+      if (errorMessage.includes('already participating') || errorMessage.includes('already hosting')) {
+        alert('You can only be in one active party at a time. Please leave your current party first.');
+      } else {
+        console.error('Failed to join party:', error);
+      }
     }
   };
 

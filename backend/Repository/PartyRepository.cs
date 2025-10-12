@@ -21,6 +21,21 @@ namespace Dotnet_test.Repository
 
         public async Task<PartyDTO> Create(Party party)
         {
+            // Check if user already hosts an active party
+            var existingHostedParty = await _context.Parties
+                .FirstOrDefaultAsync(p => p.HostUserId == party.HostUserId && p.Status == Status.Active);
+            
+            if (existingHostedParty != null)
+                throw new Exception("User is already hosting an active party");
+
+            // Check if user is already participating in any active party
+            var existingParticipation = await _context.Participants
+                .Include(p => p.Party)
+                .FirstOrDefaultAsync(p => p.UserId == party.HostUserId && p.Party.Status == Status.Active);
+            
+            if (existingParticipation != null)
+                throw new Exception("User is already participating in an active party");
+
             // Add party to the database
             _context.Parties.Add(party);
             await _context.SaveChangesAsync();
@@ -277,9 +292,28 @@ namespace Dotnet_test.Repository
             if (party == null)
                 throw new Exception("Party not found");
 
-            // Check if user is already a participant
+            // Check if party is active
+            if (party.Status != Status.Active)
+                throw new Exception("Cannot join an inactive party");
+
+            // Check if user is already a participant in this party
             if (party.Participants.Any(p => p.UserId == loggedInUserId))
                 throw new Exception("User already joined this party");
+
+            // Check if user is already hosting any active party
+            var existingHostedParty = await _context.Parties
+                .FirstOrDefaultAsync(p => p.HostUserId == loggedInUserId && p.Status == Status.Active);
+            
+            if (existingHostedParty != null)
+                throw new Exception("User is already hosting an active party and cannot join another");
+
+            // Check if user is already participating in any other active party
+            var existingParticipation = await _context.Participants
+                .Include(p => p.Party)
+                .FirstOrDefaultAsync(p => p.UserId == loggedInUserId && p.Party.Status == Status.Active);
+            
+            if (existingParticipation != null)
+                throw new Exception("User is already participating in an active party");
 
             // Load the user
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == loggedInUserId);
@@ -439,6 +473,78 @@ namespace Dotnet_test.Repository
             };
 
             return playlistSongDto;
+        }
+
+        public async Task<PartyDTO?> GetUserActiveParty(int userId)
+        {
+            // Check if user is hosting an active party
+            var hostedParty = await _context
+                .Parties.Include(s => s.HostUser)
+                .Include(s => s.Participants)
+                .ThenInclude(p => p.User)
+                .Include(s => s.Playlist)
+                .ThenInclude(p => p.Songs)
+                .ThenInclude(ps => ps.Song)
+                .FirstOrDefaultAsync(s => s.HostUserId == userId && s.Status == Status.Active);
+
+            if (hostedParty != null)
+            {
+                return MapToPartyDTO(hostedParty);
+            }
+
+            // Check if user is participating in an active party
+            var participation = await _context
+                .Participants.Include(p => p.Party)
+                .ThenInclude(s => s.HostUser)
+                .Include(p => p.Party)
+                .ThenInclude(s => s.Participants)
+                .ThenInclude(p => p.User)
+                .Include(p => p.Party)
+                .ThenInclude(s => s.Playlist)
+                .ThenInclude(p => p.Songs)
+                .ThenInclude(ps => ps.Song)
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.Party.Status == Status.Active);
+
+            if (participation != null)
+            {
+                return MapToPartyDTO(participation.Party);
+            }
+
+            return null;
+        }
+
+        private PartyDTO MapToPartyDTO(Party party)
+        {
+            return new PartyDTO
+            {
+                Id = party.Id,
+                Name = party.Name,
+                Status = party.Status,
+                CreatedAt = party.CreatedAt,
+                UpdatedAt = party.UpdatedAt,
+                HostUser = new HostUserDTO { Id = party.HostUser.Id, Username = party.HostUser.Username },
+                Participants = party.Participants.Select(p => new ParticipantInPartyDTO
+                {
+                    Id = p.Id,
+                    UserId = p.UserId,
+                    UserName = p.User.Username,
+                    JoinedAt = p.JoinedAt,
+                }).ToList(),
+                Playlist = party.Playlist != null ? new PlaylistDTO
+                {
+                    Id = party.Playlist.Id,
+                    Name = party.Playlist.Name,
+                    Songs = party.Playlist.Songs?.Select(ps => new Dotnet_test.DTOs.Song.SongDTO
+                    {
+                        Id = ps.Song.Id,
+                        Title = ps.Song.Title,
+                        Artist = ps.Song.Artist,
+                        Album = ps.Song.Album,
+                        Duration = ps.Song.Duration,
+                        FilePath = ps.Song.FilePath,
+                    }).ToList() ?? new List<Dotnet_test.DTOs.Song.SongDTO>(),
+                } : null,
+            };
         }
     }
 }
