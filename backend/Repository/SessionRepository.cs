@@ -214,5 +214,31 @@ namespace Dotnet_test.Repository
 
             return participantDto;
         }
+
+        public async Task<ParticipantInSessionDTO?> LeaveSession(LeaveSessionDTO dto)
+        {
+            // Find the participant entry for the given user and session
+            var participant = await _context
+                .Participants.Include(p => p.User) // include user to get Username
+                .FirstOrDefaultAsync(p => p.SessionId == dto.SessionId && p.UserId == dto.UserId);
+
+            if (participant == null)
+                return null; // user is not part of the session
+
+            // Remove the participant
+            _context.Participants.Remove(participant);
+            await _context.SaveChangesAsync();
+
+            // Map to DTO
+            var participantDto = new ParticipantInSessionDTO
+            {
+                Id = participant.Id,
+                UserId = participant.UserId,
+                UserName = participant.User.Username,
+                JoinedAt = participant.JoinedAt,
+            };
+
+            return participantDto;
+        }
     }
 }
