@@ -14,19 +14,19 @@ import SongsPage from './SongsPage';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
+      retry: 1, 						// If API call fails, try 1 more time
+      refetchOnWindowFocus: false, 		// Don't reload data when switching browser tabs
     },
   },
 });
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <Router>
-            <Routes>
+    <QueryClientProvider client={queryClient}> 		{/* API data management */}
+      <AuthProvider> 								{/* Login/logout state */}
+        <ToastProvider> 							{/* Notifications */}
+          <Router> 									{/* Navigation */}
+            <Routes> 								{/* Route definitions */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiService } from '../services/api';
+import { sessionService } from '../services/session.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { Plus, Users, Music, Clock } from 'lucide-react';
@@ -9,7 +9,7 @@ import { Plus, Users, Music, Clock } from 'lucide-react';
 export const DashboardPage: React.FC = () => {
   const { data: sessions, isLoading, error } = useQuery({
     queryKey: ['sessions'],
-    queryFn: () => apiService.getAllSessions(),
+    queryFn: () => sessionService.getAll(),
   });
 
   if (isLoading) {

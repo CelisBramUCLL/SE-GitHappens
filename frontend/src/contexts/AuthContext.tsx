@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User, LoginDTO, CreateUserDTO } from '../types';
-import { apiService } from '../services/api';
+import { authService } from '../services/auth.service';
 
 interface AuthContextType {
   user: User | null;
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (credentials: LoginDTO) => {
     try {
-      const response = await apiService.login(credentials);
+      const response = await authService.login(credentials);
       localStorage.setItem('token', response.token);
       
       const userData: User = {
@@ -68,8 +68,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: CreateUserDTO) => {
     try {
-      const user = await apiService.register(userData);
-      const loginResponse = await apiService.login({
+      const user = await authService.register(userData);
+      const loginResponse = await authService.login({
         username: userData.username,
         password: userData.password
       });

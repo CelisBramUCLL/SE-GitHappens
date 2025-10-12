@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Music, Clock } from 'lucide-react';
-import { apiService } from '../services/api';
+import { songService } from '../services/song.service';
+import { sessionService } from '../services/session.service';
 import { Layout } from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
 
@@ -41,12 +42,12 @@ export default function SongsPage() {
 
   const { data: songsData, isLoading, error } = useQuery<SongsResponse>({
     queryKey: ['songs', debouncedSearch, page],
-    queryFn: () => apiService.getAllSongs(debouncedSearch || undefined, page, 20) as Promise<SongsResponse>,
+    queryFn: () => songService.getAll(debouncedSearch || undefined, page, 20) as Promise<SongsResponse>,
   });
 
   const handleAddSong = async (songId: number) => {
     try {
-      await apiService.addSongToSession(songId);
+      await sessionService.addSong(songId);
       // Invalidate session queries to refresh session data
       queryClient.invalidateQueries({ queryKey: ['session'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });

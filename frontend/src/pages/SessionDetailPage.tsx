@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '../services/api';
+import { sessionService } from '../services/session.service';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Layout } from '../components/Layout';
@@ -29,14 +29,14 @@ export const SessionDetailPage: React.FC = () => {
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['session', id],
-    queryFn: () => apiService.getSessionById(Number(id)),
+    queryFn: () => sessionService.getById(Number(id)),
     enabled: !!id,
   });
 
   const sessionData = session as any;
 
   const joinSessionMutation = useMutation({
-    mutationFn: () => apiService.joinSession(Number(id)),
+    mutationFn: () => sessionService.join(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session', id] });
       toast.success('Successfully joined the session!');
@@ -47,7 +47,7 @@ export const SessionDetailPage: React.FC = () => {
   });
 
   const leaveSessionMutation = useMutation({
-    mutationFn: () => apiService.leaveSession(Number(id)),
+    mutationFn: () => sessionService.leave(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session', id] });
       toast.success('Successfully left the session.');
@@ -58,7 +58,7 @@ export const SessionDetailPage: React.FC = () => {
   });
 
   const removeSongMutation = useMutation({
-    mutationFn: (songId: number) => apiService.removeSongFromSession(songId),
+    mutationFn: (songId: number) => sessionService.removeSong(songId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session', id] });
       toast.success('Song removed from playlist.');
@@ -69,7 +69,7 @@ export const SessionDetailPage: React.FC = () => {
   });
 
   const deleteSessionMutation = useMutation({
-    mutationFn: () => apiService.deleteSession(Number(id)),
+    mutationFn: () => sessionService.delete(Number(id)),
     onSuccess: () => {
       toast.success('Session stopped successfully.');
       navigate('/sessions');

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '../services/api';
+import { sessionService } from '../services/session.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { Plus, Music, Users, Calendar, MoreVertical } from 'lucide-react';
@@ -12,11 +12,11 @@ export const SessionsPage: React.FC = () => {
 
   const { data: sessions, isLoading, error } = useQuery({
     queryKey: ['sessions'],
-    queryFn: () => apiService.getAllSessions(),
+    queryFn: () => sessionService.getAll(),
   });
 
   const joinSessionMutation = useMutation({
-    mutationFn: (sessionId: number) => apiService.joinSession(sessionId),
+    mutationFn: (sessionId: number) => sessionService.join(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     },

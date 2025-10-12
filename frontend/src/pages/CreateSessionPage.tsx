@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '../services/api';
+import { sessionService } from '../services/session.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -11,10 +11,10 @@ export const CreateSessionPage: React.FC = () => {
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient();	
 
   const createSessionMutation = useMutation({
-    mutationFn: (data: { name: string }) => apiService.createSession(data),
+    mutationFn: (data: { name: string }) => sessionService.create(data),
     onSuccess: (session: any) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       navigate(`/sessions/${session.id}`);
