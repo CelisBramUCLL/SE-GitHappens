@@ -4,10 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
+import { useAuth } from '../contexts/AuthContext';
 import { Plus, Music, Users, Calendar } from 'lucide-react';
 
 export const PartiesPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: parties, isLoading, error } = useQuery({
     queryKey: ['parties'],
@@ -27,6 +29,20 @@ export const PartiesPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to join party:', error);
     }
+  };
+
+  // Helper function to check if current user is already in the party
+  const isUserInParty = (party: any) => {
+    if (!user || !party.participants) return false;
+    return party.participants.some((participant: any) => 
+      participant.userName === user.username
+    );
+  };
+
+  // Helper function to check if current user is the host
+  const isUserHost = (party: any) => {
+    if (!user || !party.hostUser) return false;
+    return party.hostUser.username === user.username;
   };
 
   if (isLoading) {
@@ -114,7 +130,7 @@ export const PartiesPage: React.FC = () => {
                             View
                           </Button>
                         </Link>
-                        {party.status === 'Active' && (
+                        {party.status === 'Active' && !isUserInParty(party) && !isUserHost(party) && (
                           <Button
                             size="sm"
                             onClick={() => handleJoinParty(party.id)}
@@ -122,6 +138,26 @@ export const PartiesPage: React.FC = () => {
                             className="cursor-pointer"
                           >
                             {joinPartyMutation.isPending ? 'Joining...' : 'Join'}
+                          </Button>
+                        )}
+                        {party.status === 'Active' && isUserInParty(party) && !isUserHost(party) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="cursor-default"
+                          >
+                            Joined
+                          </Button>
+                        )}
+                        {isUserHost(party) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="cursor-default text-blue-600 border-blue-600"
+                          >
+                            Host
                           </Button>
                         )}
                       </div>
