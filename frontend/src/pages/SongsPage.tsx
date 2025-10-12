@@ -112,7 +112,7 @@ export default function SongsPage() {
       {songsData && (
         <div className="mb-6">
           <p className="text-gray-600">
-            Showing {songsData.songs.length} of {songsData.totalCount} songs
+            Showing {((page - 1) * 20) + 1}-{Math.min(page * 20, songsData.totalCount)} of {songsData.totalCount} songs
             {debouncedSearch && ` for "${debouncedSearch}"`}
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function SongsPage() {
                 </div>
                 <button
                   onClick={() => handleAddSong(song.id)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add</span>
@@ -164,7 +164,7 @@ export default function SongsPage() {
           <button
             onClick={() => setPage(page - 1)}
             disabled={page === 1}
-            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 cursor-pointer transition-colors"
           >
             Previous
           </button>
@@ -176,7 +176,7 @@ export default function SongsPage() {
                 <button
                   key={pageNum}
                   onClick={() => setPage(pageNum)}
-                  className={`px-3 py-2 rounded-lg ${
+                  className={`px-3 py-2 rounded-lg cursor-pointer transition-colors ${
                     page === pageNum
                       ? 'bg-blue-600 text-white'
                       : 'border border-gray-300 hover:bg-gray-50'
@@ -191,7 +191,7 @@ export default function SongsPage() {
           <button
             onClick={() => setPage(page + 1)}
             disabled={page === songsData.totalPages}
-            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 cursor-pointer transition-colors"
           >
             Next
           </button>
