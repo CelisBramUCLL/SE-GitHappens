@@ -1,8 +1,8 @@
-﻿using Dotnet_test.Domain;
+using Dotnet_test.Domain;
 
-namespace Dotnet_test.DTOs.Session
+namespace Dotnet_test.DTOs.Party
 {
-    public class UpdateSessionDTO
+    public class UpdatePartyDTO
     {
         public string? Name { get; set; }
         public Status? Status { get; set; }

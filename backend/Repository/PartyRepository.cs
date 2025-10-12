@@ -1,7 +1,7 @@
-﻿using Dotnet_test.Domain;
+using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
+using Dotnet_test.DTOs.Party;
 using Dotnet_test.DTOs.Playlist;
-using Dotnet_test.DTOs.Session;
 using Dotnet_test.DTOs.Song;
 using Dotnet_test.DTOs.User;
 using Dotnet_test.Infrastructure;
@@ -10,35 +10,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dotnet_test.Repository
 {
-    public class SessionRepository : ISessionRepository
+    public class PartyRepository : IPartyRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public SessionRepository(ApplicationDbContext context)
+        public PartyRepository(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<SessionDTO> Create(Session session)
+        public async Task<PartyDTO> Create(Party party)
         {
-            // Add session to the database
-            _context.Sessions.Add(session);
+            // Add party to the database
+            _context.Parties.Add(party);
             await _context.SaveChangesAsync();
 
-            // Create playlist for the session
-            var playlist = new Playlist
-            {
-                Name = $"{session.Name} Playlist",
-                SessionId = session.Id,
-            };
+            // Create playlist for the party
+            var playlist = new Playlist { Name = $"{party.Name} Playlist", PartyId = party.Id };
             _context.Playlists.Add(playlist);
             await _context.SaveChangesAsync();
 
             // Automatically add the host as a participant
             var hostParticipant = new Participant
             {
-                SessionId = session.Id,
-                UserId = session.HostUserId,
+                PartyId = party.Id,
+                UserId = party.HostUserId,
                 JoinedAt = DateTime.UtcNow,
                 Role = ParticipantRole.Host,
             };
@@ -46,28 +42,26 @@ namespace Dotnet_test.Repository
             await _context.SaveChangesAsync();
 
             // Load host user to populate DTO
-            var hostUser = await _context.Users.FirstOrDefaultAsync(u =>
-                u.Id == session.HostUserId
-            );
+            var hostUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == party.HostUserId);
 
             if (hostUser == null)
                 throw new Exception("Host user not found");
 
-            // Map to SessionDTO
-            var sessionDto = new SessionDTO
+            // Map to PartyDTO
+            var partyDto = new PartyDTO
             {
-                Id = session.Id,
-                Name = session.Name,
-                Status = session.Status,
-                CreatedAt = session.CreatedAt,
-                UpdatedAt = session.UpdatedAt,
+                Id = party.Id,
+                Name = party.Name,
+                Status = party.Status,
+                CreatedAt = party.CreatedAt,
+                UpdatedAt = party.UpdatedAt,
                 HostUser = new HostUserDTO { Id = hostUser.Id, Username = hostUser.Username },
-                Participants = new List<ParticipantInSessionDTO>
+                Participants = new List<ParticipantInPartyDTO>
                 {
-                    new ParticipantInSessionDTO
+                    new ParticipantInPartyDTO
                     {
                         Id = hostParticipant.Id,
-                        UserId = session.HostUserId,
+                        UserId = party.HostUserId,
                         UserName = hostUser.Username,
                         JoinedAt = hostParticipant.JoinedAt,
                     },
@@ -80,30 +74,30 @@ namespace Dotnet_test.Repository
                 },
             };
 
-            return sessionDto;
+            return partyDto;
         }
 
         public async Task<bool> Delete(int id)
         {
-            var session = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == id);
-            if (session == null)
+            var party = await _context.Parties.FirstOrDefaultAsync(x => x.Id == id);
+            if (party == null)
                 return false;
 
-            _context.Sessions.Remove(session);
+            _context.Parties.Remove(party);
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<List<SessionDTO>> GetAll()
+        public async Task<List<PartyDTO>> GetAll()
         {
             return await _context
-                .Sessions.Include(s => s.HostUser)
+                .Parties.Include(s => s.HostUser)
                 .Include(s => s.Participants)
                 .ThenInclude(p => p.User)
                 .Include(s => s.Playlist)
                 .ThenInclude(p => p.Songs)
                 .ThenInclude(ps => ps.Song)
-                .Select(s => new SessionDTO
+                .Select(s => new PartyDTO
                 {
                     Id = s.Id,
                     Name = s.Name,
@@ -116,7 +110,7 @@ namespace Dotnet_test.Repository
                         Username = s.HostUser.Username,
                     },
                     Participants = s
-                        .Participants.Select(p => new ParticipantInSessionDTO
+                        .Participants.Select(p => new ParticipantInPartyDTO
                         {
                             Id = p.Id,
                             UserId = p.UserId,
@@ -149,10 +143,10 @@ namespace Dotnet_test.Repository
                 .ToListAsync();
         }
 
-        public async Task<SessionDTO?> GetById(int id)
+        public async Task<PartyDTO?> GetById(int id)
         {
-            var session = await _context
-                .Sessions.Include(s => s.HostUser)
+            var party = await _context
+                .Parties.Include(s => s.HostUser)
                 .Include(s => s.Participants)
                 .ThenInclude(p => p.User)
                 .Include(s => s.Playlist)
@@ -163,23 +157,23 @@ namespace Dotnet_test.Repository
                 .ThenInclude(ps => ps.AddedByUser)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (session == null)
+            if (party == null)
                 return null;
 
-            var sessionDto = new SessionDTO
+            var partyDto = new PartyDTO
             {
-                Id = session.Id,
-                Name = session.Name,
-                Status = session.Status,
-                CreatedAt = session.CreatedAt,
-                UpdatedAt = session.UpdatedAt,
+                Id = party.Id,
+                Name = party.Name,
+                Status = party.Status,
+                CreatedAt = party.CreatedAt,
+                UpdatedAt = party.UpdatedAt,
                 HostUser = new HostUserDTO
                 {
-                    Id = session.HostUser.Id,
-                    Username = session.HostUser.Username,
+                    Id = party.HostUser.Id,
+                    Username = party.HostUser.Username,
                 },
-                Participants = session
-                    .Participants.Select(p => new ParticipantInSessionDTO
+                Participants = party
+                    .Participants.Select(p => new ParticipantInPartyDTO
                     {
                         Id = p.Id,
                         UserId = p.UserId,
@@ -188,12 +182,12 @@ namespace Dotnet_test.Repository
                     })
                     .ToList(),
                 Playlist =
-                    session.Playlist != null
+                    party.Playlist != null
                         ? new PlaylistDTO
                         {
-                            Id = session.Playlist.Id,
-                            Name = session.Playlist.Name,
-                            Songs = session
+                            Id = party.Playlist.Id,
+                            Name = party.Playlist.Name,
+                            Songs = party
                                 .Playlist.Songs.Select(ps => new Dotnet_test.DTOs.Song.SongDTO
                                 {
                                     Id = ps.Song.Id,
@@ -218,46 +212,49 @@ namespace Dotnet_test.Repository
                         },
             };
 
-            return sessionDto;
+            return partyDto;
         }
 
-        public async Task<SessionDTO?> Update(Session session, UpdateSessionDTO request)
+        // TODO: Add remaining methods (Update, JoinParty, LeaveParty, AddSongToCurrentParty, RemoveSongFromCurrentParty)
+        // These will be implemented as we continue the conversion
+
+        public async Task<PartyDTO?> Update(Party party, UpdatePartyDTO request)
         {
-            var sessionInDb = await _context
-                .Sessions.Include(s => s.HostUser)
+            var partyInDb = await _context
+                .Parties.Include(s => s.HostUser)
                 .Include(s => s.Participants)
                 .ThenInclude(p => p.User)
-                .FirstOrDefaultAsync(x => x.Id == session.Id);
+                .FirstOrDefaultAsync(x => x.Id == party.Id);
 
-            if (sessionInDb == null)
+            if (partyInDb == null)
                 return null;
 
-            // Update session properties
+            // Update party properties
             if (request.Name != null)
-                sessionInDb.Name = request.Name;
+                partyInDb.Name = request.Name;
 
             if (request.Status != null)
-                sessionInDb.Status = request.Status.Value;
+                partyInDb.Status = request.Status.Value;
 
-            sessionInDb.UpdatedAt = DateTime.UtcNow;
+            partyInDb.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
             // Map to DTO
-            var sessionDto = new SessionDTO
+            var partyDto = new PartyDTO
             {
-                Id = sessionInDb.Id,
-                Name = sessionInDb.Name,
-                Status = sessionInDb.Status,
-                CreatedAt = sessionInDb.CreatedAt,
-                UpdatedAt = sessionInDb.UpdatedAt,
+                Id = partyInDb.Id,
+                Name = partyInDb.Name,
+                Status = partyInDb.Status,
+                CreatedAt = partyInDb.CreatedAt,
+                UpdatedAt = partyInDb.UpdatedAt,
                 HostUser = new HostUserDTO
                 {
-                    Id = sessionInDb.HostUser.Id,
-                    Username = sessionInDb.HostUser.Username,
+                    Id = partyInDb.HostUser.Id,
+                    Username = partyInDb.HostUser.Username,
                 },
-                Participants = sessionInDb
-                    .Participants.Select(p => new ParticipantInSessionDTO
+                Participants = partyInDb
+                    .Participants.Select(p => new ParticipantInPartyDTO
                     {
                         Id = p.Id,
                         UserId = p.UserId,
@@ -267,22 +264,22 @@ namespace Dotnet_test.Repository
                     .ToList(),
             };
 
-            return sessionDto;
+            return partyDto;
         }
 
-        public async Task<ParticipantDTO> JoinSession(JoinSessionDTO dto, int loggedInUserId)
+        public async Task<ParticipantDTO> JoinParty(JoinPartyDTO dto, int loggedInUserId)
         {
-            // Check if session exists
-            var session = await _context
-                .Sessions.Include(s => s.Participants)
-                .FirstOrDefaultAsync(s => s.Id == dto.SessionId);
+            // Check if party exists
+            var party = await _context
+                .Parties.Include(s => s.Participants)
+                .FirstOrDefaultAsync(s => s.Id == dto.PartyId);
 
-            if (session == null)
-                throw new Exception("Session not found");
+            if (party == null)
+                throw new Exception("Party not found");
 
             // Check if user is already a participant
-            if (session.Participants.Any(p => p.UserId == loggedInUserId))
-                throw new Exception("User already joined this session");
+            if (party.Participants.Any(p => p.UserId == loggedInUserId))
+                throw new Exception("User already joined this party");
 
             // Load the user
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == loggedInUserId);
@@ -292,7 +289,7 @@ namespace Dotnet_test.Repository
             // Create new participant
             var participant = new Participant
             {
-                SessionId = dto.SessionId,
+                PartyId = dto.PartyId,
                 UserId = loggedInUserId,
                 JoinedAt = DateTime.UtcNow,
             };
@@ -304,7 +301,7 @@ namespace Dotnet_test.Repository
             var participantDto = new ParticipantDTO
             {
                 Id = participant.Id,
-                SessionId = participant.SessionId,
+                PartyId = participant.PartyId,
                 UserId = participant.UserId,
                 JoinedAt = participant.JoinedAt,
                 User = new HostUserDTO { Id = user.Id, Username = user.Username },
@@ -313,22 +310,22 @@ namespace Dotnet_test.Repository
             return participantDto;
         }
 
-        public async Task<ParticipantInSessionDTO?> LeaveSession(int sessionId, int loggedInUserId)
+        public async Task<ParticipantInPartyDTO?> LeaveParty(int partyId, int loggedInUserId)
         {
-            // Find the participant entry for the given user and session
+            // Find the participant entry for the given user and party
             var participant = await _context
                 .Participants.Include(p => p.User) // include user to get Username
-                .FirstOrDefaultAsync(p => p.SessionId == sessionId && p.UserId == loggedInUserId);
+                .FirstOrDefaultAsync(p => p.PartyId == partyId && p.UserId == loggedInUserId);
 
             if (participant == null)
                 return null;
 
-            // Remove the participant from session
+            // Remove the participant from party
             _context.Participants.Remove(participant);
             await _context.SaveChangesAsync();
 
             // Map to DTO
-            var participantDto = new ParticipantInSessionDTO
+            var participantDto = new ParticipantInPartyDTO
             {
                 Id = participant.Id,
                 UserId = participant.UserId,
@@ -339,11 +336,11 @@ namespace Dotnet_test.Repository
             return participantDto;
         }
 
-        public async Task<PlaylistSongDTO> AddSongToCurrentSession(int userId, AddSongDTO dto)
+        public async Task<PlaylistSongDTO> AddSongToCurrentParty(int userId, AddSongDTO dto)
         {
-            // Find the active session the user is currently in (either as host or participant)
-            var session = await _context
-                .Sessions.Include(s => s.Playlist)
+            // Find the active party the user is currently in (either as host or participant)
+            var party = await _context
+                .Parties.Include(s => s.Playlist)
                 .ThenInclude(p => p.Songs)
                 .ThenInclude(ps => ps.Song)
                 .Include(s => s.Participants)
@@ -352,11 +349,11 @@ namespace Dotnet_test.Repository
                     && (s.HostUserId == userId || s.Participants.Any(p => p.UserId == userId))
                 );
 
-            if (session == null)
-                throw new Exception("User is not in any active session");
+            if (party == null)
+                throw new Exception("User is not in any active party");
 
-            if (session.Playlist == null)
-                throw new Exception("Session does not have a playlist");
+            if (party.Playlist == null)
+                throw new Exception("Party does not have a playlist");
 
             // Find the song to add
             var song = await _context.Songs.FirstOrDefaultAsync(s => s.Id == dto.SongId);
@@ -364,14 +361,14 @@ namespace Dotnet_test.Repository
                 throw new Exception("Song not found");
 
             // Determine the next position in the playlist
-            int nextPosition = session.Playlist.Songs.Any()
-                ? session.Playlist.Songs.Max(ps => ps.Position) + 1
+            int nextPosition = party.Playlist.Songs.Any()
+                ? party.Playlist.Songs.Max(ps => ps.Position) + 1
                 : 1;
 
             // Create the PlaylistSong entry
             var playlistSong = new PlaylistSong
             {
-                PlaylistId = session.Playlist.Id,
+                PlaylistId = party.Playlist.Id,
                 SongId = song.Id,
                 AddedByUserId = userId,
                 Position = nextPosition,
@@ -397,14 +394,11 @@ namespace Dotnet_test.Repository
             };
         }
 
-        public async Task<PlaylistSongDTO> RemoveSongFromCurrentSession(
-            int userId,
-            RemoveSongDTO dto
-        )
+        public async Task<PlaylistSongDTO> RemoveSongFromCurrentParty(int userId, RemoveSongDTO dto)
         {
-            // Find the active session the user is currently in (either as host or participant)
-            var session = await _context
-                .Sessions.Include(s => s.Playlist)
+            // Find the active party the user is currently in (either as host or participant)
+            var party = await _context
+                .Parties.Include(s => s.Playlist)
                 .ThenInclude(p => p.Songs)
                 .ThenInclude(ps => ps.Song)
                 .Include(s => s.Participants)
@@ -413,14 +407,14 @@ namespace Dotnet_test.Repository
                     && (s.HostUserId == userId || s.Participants.Any(p => p.UserId == userId))
                 );
 
-            if (session == null)
-                throw new Exception("User is not in any active session");
+            if (party == null)
+                throw new Exception("User is not in any active party");
 
-            if (session.Playlist == null)
-                throw new Exception("Session does not have a playlist");
+            if (party.Playlist == null)
+                throw new Exception("Party does not have a playlist");
 
             // Find the playlist entry
-            var playlistSong = session.Playlist.Songs.FirstOrDefault(ps => ps.SongId == dto.SongId);
+            var playlistSong = party.Playlist.Songs.FirstOrDefault(ps => ps.SongId == dto.SongId);
 
             if (playlistSong == null)
                 throw new Exception("Song not found in the playlist");

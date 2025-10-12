@@ -33,8 +33,8 @@ namespace Dotnet_test.Repository
         {
             // Include all relevant navigation properties
             var user = await _context
-                .Users.Include(u => u.SessionsJoined)
-                .Include(u => u.HostedSessions)
+                .Users.Include(u => u.PartiesJoined)
+                .Include(u => u.HostedParties)
                 .ThenInclude(s => s.Participants)
                 .Include(u => u.AddedPlaylistSongs)
                 .ThenInclude(p => p.Song)
@@ -44,15 +44,15 @@ namespace Dotnet_test.Repository
                 return false;
 
             // Remove participant entries where the user is just a participant
-            if (user.SessionsJoined != null && user.SessionsJoined.Any())
+            if (user.PartiesJoined != null && user.PartiesJoined.Any())
             {
-                _context.Participants.RemoveRange(user.SessionsJoined);
+                _context.Participants.RemoveRange(user.PartiesJoined);
             }
 
-            // Delete hosted sessions (participants cascade)
-            if (user.HostedSessions != null && user.HostedSessions.Any())
+            // Delete hosted parties (participants cascade)
+            if (user.HostedParties != null && user.HostedParties.Any())
             {
-                _context.Sessions.RemoveRange(user.HostedSessions);
+                _context.Parties.RemoveRange(user.HostedParties);
             }
 
             // Remove playlist songs the user added

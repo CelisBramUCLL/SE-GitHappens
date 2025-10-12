@@ -33,31 +33,31 @@ export interface HostUserDTO {
   username: string;
 }
 
-// Session types
-export interface Session {
+// Party types
+export interface Party {
   id: number;
   name: string;
-  status: SessionStatus;
+  status: PartyStatus;
   createdAt: string;
   updatedAt: string;
   hostUser: HostUserDTO;
   playlist: PlaylistDTO;
-  participants: ParticipantInSessionDTO[];
+  participants: ParticipantInPartyDTO[];
 }
 
-export interface CreateSessionDTO {
+export interface CreatePartyDTO {
   name: string;
 }
 
-export interface JoinSessionDTO {
-  sessionId: number;
+export interface JoinPartyDTO {
+  partyId: number;
 }
 
-export interface LeaveSessionDTO {
-  sessionId: number;
+export interface LeavePartyDTO {
+  partyId: number;
 }
 
-export interface UpdateSessionDTO {
+export interface UpdatePartyDTO {
   name?: string;
 }
 
@@ -65,12 +65,12 @@ export interface UpdateSessionDTO {
 export interface ParticipantDTO {
   id: number;
   userId: number;
-  sessionId: number;
+  partyId: number;
   joinedAt: string;
   user?: HostUserDTO;
 }
 
-export interface ParticipantInSessionDTO {
+export interface ParticipantInPartyDTO {
   id: number;
   userName: string;
   joinedAt: string;
@@ -123,12 +123,12 @@ export const Role = {
 
 export type Role = typeof Role[keyof typeof Role];
 
-export const SessionStatus = {
+export const PartyStatus = {
   Active: 'Active' as const,
   Ended: 'Ended' as const
 } as const;
 
-export type SessionStatus = typeof SessionStatus[keyof typeof SessionStatus];
+export type PartyStatus = typeof PartyStatus[keyof typeof PartyStatus];
 
 export const ParticipantRole = {
   Host: 'Host' as const,

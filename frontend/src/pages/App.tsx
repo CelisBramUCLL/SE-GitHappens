@@ -6,9 +6,9 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { LoginPage } from './LoginPage';
 import { RegisterPage } from './RegisterPage';
 import { DashboardPage } from './DashboardPage';
-import { SessionsPage } from './SessionsPage';
-import { CreateSessionPage } from './CreateSessionPage';
-import { SessionDetailPage } from './SessionDetailPage';
+import { PartiesPage } from './PartiesPage';
+import { CreatePartyPage } from './CreatePartyPage';
+import { PartyDetailPage } from './PartyDetailPage';
 import SongsPage from './SongsPage';
 
 const queryClient = new QueryClient({
@@ -38,26 +38,26 @@ function App() {
                 }
               />
               <Route
-                path="/sessions"
+                path="/parties"
                 element={
                   <ProtectedRoute>
-                    <SessionsPage />
+                    <PartiesPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/sessions/create"
+                path="/parties/create"
                 element={
                   <ProtectedRoute>
-                    <CreateSessionPage />
+                    <CreatePartyPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/sessions/:id"
+                path="/parties/:id"
                 element={
                   <ProtectedRoute>
-                    <SessionDetailPage />
+                    <PartyDetailPage />
                   </ProtectedRoute>
                 }
               />

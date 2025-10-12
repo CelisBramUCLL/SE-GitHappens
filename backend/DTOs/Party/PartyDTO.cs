@@ -1,11 +1,11 @@
-﻿using Dotnet_test.Domain;
+using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Playlist;
 using Dotnet_test.DTOs.User;
 
-namespace Dotnet_test.DTOs.Session
+namespace Dotnet_test.DTOs.Party
 {
-    public class SessionDTO
+    public class PartyDTO
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -17,7 +17,7 @@ namespace Dotnet_test.DTOs.Session
 
         public PlaylistDTO Playlist { get; set; }
 
-        public List<ParticipantInSessionDTO> Participants { get; set; } =
-            new List<ParticipantInSessionDTO>();
+        public List<ParticipantInPartyDTO> Participants { get; set; } =
+            new List<ParticipantInPartyDTO>();
     }
 }

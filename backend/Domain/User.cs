@@ -21,8 +21,8 @@
         public Role Role { get; set; } = Role.User;
 
         // Navigation
-        public ICollection<Session> HostedSessions { get; set; } = new List<Session>();
-        public ICollection<Participant> SessionsJoined { get; set; } = new List<Participant>();
+        public ICollection<Party> HostedParties { get; set; } = new List<Party>();
+        public ICollection<Participant> PartiesJoined { get; set; } = new List<Participant>();
         public ICollection<PlaylistSong> AddedPlaylistSongs { get; set; } =
             new List<PlaylistSong>();
     }
