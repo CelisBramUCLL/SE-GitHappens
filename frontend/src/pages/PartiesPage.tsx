@@ -90,7 +90,7 @@ export const PartiesPage: React.FC = () => {
                     <div className="relative">
                       <button
                         onClick={() => setSelectedParty(selectedParty === party.id ? null : party.id)}
-                        className="p-1 rounded-full hover:bg-gray-100"
+                        className="p-1 rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
                       >
                         <MoreVertical className="h-4 w-4 text-gray-400" />
                       </button>
@@ -99,7 +99,7 @@ export const PartiesPage: React.FC = () => {
                           <div className="py-1">
                             <Link
                               to={`/parties/${party.id}`}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
                               onClick={() => setSelectedParty(null)}
                             >
                               View Details
@@ -109,7 +109,7 @@ export const PartiesPage: React.FC = () => {
                                 handleJoinParty(party.id);
                                 setSelectedParty(null);
                               }}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
                             >
                               Join Party
                             </button>
@@ -152,6 +152,7 @@ export const PartiesPage: React.FC = () => {
                             size="sm"
                             onClick={() => handleJoinParty(party.id)}
                             disabled={joinPartyMutation.isPending}
+                            className="cursor-pointer"
                           >
                             {joinPartyMutation.isPending ? 'Joining...' : 'Join'}
                           </Button>

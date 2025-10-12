@@ -117,6 +117,27 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Ensure all interactive elements have proper cursor */
+  button, 
+  [role="button"], 
+  input[type="submit"], 
+  input[type="button"], 
+  input[type="reset"],
+  a[href],
+  label[for],
+  select,
+  summary,
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+  
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* Toast animations */
