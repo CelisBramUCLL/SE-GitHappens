@@ -20,6 +20,9 @@ namespace Dotnet_test.Infrastructure
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configure User entity
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+
             // Deleting a user deletes hosted parties
             modelBuilder
                 .Entity<Party>()

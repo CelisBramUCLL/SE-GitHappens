@@ -18,7 +18,7 @@ export interface CreateUserDTO {
 }
 
 export interface LoginDTO {
-  username: string;
+  email: string;
   password: string;
 }
 
