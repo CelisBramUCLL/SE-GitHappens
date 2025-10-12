@@ -21,5 +21,6 @@ namespace Dotnet_test.Interfaces
         Task<ParticipantInPartyDTO?> LeaveParty(int partyId, int loggedInUserId);
         Task<PlaylistSongDTO> AddSongToCurrentParty(int userId, AddSongDTO dto);
         Task<PlaylistSongDTO> RemoveSongFromCurrentParty(int userId, RemoveSongDTO dto);
+        Task<PartyDTO?> GetUserActiveParty(int userId);
     }
 }
