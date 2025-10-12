@@ -13,9 +13,47 @@ export abstract class BaseService {
 
   protected async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || `HTTP error! status: ${response.status}`);
+      console.log('Error response status:', response.status);
+      console.log('Error response headers:', [...response.headers.entries()]);
+      
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      
+      // Clone the response so we can read it multiple times if needed
+      const responseClone = response.clone();
+      
+      try {
+        // Try to parse error response as JSON first
+        const errorData = await response.json();
+        console.log('Parsed error data:', errorData);
+        
+        // Extract message from various possible error formats
+        if (errorData && typeof errorData === 'object') {
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        }
+      } catch (jsonError) {
+        console.log('JSON parsing failed:', jsonError);
+        // If JSON parsing fails, try reading as text
+        try {
+          const errorText = await responseClone.text();
+          console.log('Error text:', errorText);
+          if (errorText && errorText.trim()) {
+            errorMessage = errorText;
+          }
+        } catch (textError) {
+          console.warn('Failed to parse error response:', jsonError, textError);
+        }
+      }
+      
+      console.log('Final error message:', errorMessage);
+      throw new Error(errorMessage);
     }
+    
     return response.json();
   }
 
