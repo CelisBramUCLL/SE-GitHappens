@@ -24,6 +24,13 @@ namespace Dotnet_test.Repository
 
         public async Task<User> Create(User user)
         {
+            // Check if email already exists
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (existingUser != null)
+                throw new InvalidOperationException(
+                    "A user with this email address already exists"
+                );
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return user;
@@ -108,7 +115,7 @@ namespace Dotnet_test.Repository
 
         public async Task<LoginResponseDTO?> Login(LoginDTO dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == dto.Username);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null)
                 return null;
 

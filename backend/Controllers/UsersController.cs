@@ -41,21 +41,34 @@ namespace Dotnet_test.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser(CreateUserDTO request)
         {
-            var newUser = new User()
+            try
             {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Username = request.Username,
-                Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
-                    ? parsedRole
-                    : Role.User,
-            };
+                var newUser = new User()
+                {
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    Email = request.Email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    Username = request.Username,
+                    Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
+                        ? parsedRole
+                        : Role.User,
+                };
 
-            var created = await _userRepository.Create(newUser);
-
-            return Ok(created);
+                var created = await _userRepository.Create(newUser);
+                return Ok(created);
+            }
+            catch (InvalidOperationException ex)
+                when (ex.Message.Contains("email address already exists"))
+            {
+                return BadRequest(
+                    new { message = "A user with this email address already exists" }
+                );
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { message = "An error occurred while creating the user" });
+            }
         }
 
         // Update user
@@ -103,7 +116,7 @@ namespace Dotnet_test.Controllers
         {
             var result = await _userRepository.Login(dto);
             if (result == null)
-                return Unauthorized(new { message = "Invalid username or password" });
+                return Unauthorized(new { message = "Invalid email or password" });
 
             return Ok(result);
         }

@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const user = await authService.register(userData);
       const loginResponse = await authService.login({
-        username: userData.username,
+        email: userData.email,
         password: userData.password
       });
       
