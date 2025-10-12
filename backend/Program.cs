@@ -1,59 +1,19 @@
-<<<<<<< HEAD
 using Backend.Models;
 var builder = WebApplication.CreateBuilder(args);
 
-// Variables
-var allowedOrigins = builder.Configuration
-    .GetSection("AllowedOrigins")
-    .Get<string[]>() ?? Array.Empty<string>();
-var apiVersion = builder.Configuration["ApiVersion"] ?? "v1";
-var basePath = $"/api/{apiVersion}";
-
-// Services
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<List<Todo>>();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .SetIsOriginAllowed(origin => true) // Allow any origin for debugging
-              .AllowCredentials();
-    });
-});
-=======
-using System.Text;
-using System.Text.Json.Serialization;
-using Dotnet_test.Infrastructure;
-using Dotnet_test.Interfaces;
-using Dotnet_test.Repository;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-
-var builder = WebApplication.CreateBuilder(args);
-
 // Add services to the container.
-builder
-    .Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // serialize enums as strings in API responses
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+
+builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Register db context
+// register db context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// Allow cross origin requests
+// allow cross origin requests
 builder.Services.AddCors(p =>
     p.AddPolicy(
         "defaultPolicy",
@@ -64,10 +24,14 @@ builder.Services.AddCors(p =>
     )
 );
 
-// Register repositories
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ISessionRepository, SessionRepository>();
->>>>>>> d29e01c (added JWT authorization)
+// to serialize enums as strings in api responses
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+});
 
 // Add JWT Authentication
 builder
@@ -91,27 +55,23 @@ builder
             ),
         };
     });
+    
+// register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 
 var app = builder.Build();
 
-// Middleware`
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.UseCors("defaultPolicy");
 }
 
-app.UseCors("AllowFrontend");
-app.UseHttpsRedirection();  
+app.UseHttpsRedirection();
 
-<<<<<<< HEAD
-=======
-// Enable authentication and authorization middleware
-app.UseAuthentication();
 app.UseAuthorization();
->>>>>>> d29e01c (added JWT authorization)
 
-var baseGroup = app.MapGroup(basePath);
-baseGroup.MapTodoEndpoints(basePath);
+app.MapControllers();
 
 app.Run();
