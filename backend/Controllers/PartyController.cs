@@ -199,10 +199,10 @@ namespace Dotnet_test.Controllers
                 int loggedInUserId = int.Parse(userIdClaim.Value);
 
                 var activeParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
-                
+
                 if (activeParty == null)
                     return Ok(new { hasActiveParty = false, party = (object)null });
-                
+
                 return Ok(new { hasActiveParty = true, party = activeParty });
             }
             catch (Exception ex)
