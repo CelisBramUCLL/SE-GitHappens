@@ -4,10 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
-import { Plus, Music, Users, Calendar, MoreVertical } from 'lucide-react';
+import { Plus, Music, Users, Calendar } from 'lucide-react';
 
 export const PartiesPage: React.FC = () => {
-  const [selectedParty, setSelectedParty] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   const { data: parties, isLoading, error } = useQuery({
@@ -69,64 +68,32 @@ export const PartiesPage: React.FC = () => {
         </div>
 
         {Array.isArray(parties) && parties.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {parties.map((party: any) => (
               <div key={party.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Music className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {party.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          by {party.hostUser?.username}
-                        </p>
-                      </div>
+                <div className="p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Music className="h-4 w-4 text-blue-600" />
                     </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => setSelectedParty(selectedParty === party.id ? null : party.id)}
-                        className="p-1 rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
-                      >
-                        <MoreVertical className="h-4 w-4 text-gray-400" />
-                      </button>
-                      {selectedParty === party.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                          <div className="py-1">
-                            <Link
-                              to={`/parties/${party.id}`}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
-                              onClick={() => setSelectedParty(null)}
-                            >
-                              View Details
-                            </Link>
-                            <button
-                              onClick={() => {
-                                handleJoinParty(party.id);
-                                setSelectedParty(null);
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
-                            >
-                              Join Party
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                    <div>
+                      <h3 className="text-base font-medium text-gray-900">
+                        {party.name}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        by {party.hostUser?.username}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Users className="h-4 w-4 mr-2" />
+                  <div className="space-y-2">
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Users className="h-3 w-3 mr-1" />
                       <span>{party.participants?.length || 0} participants</span>
                     </div>
                     
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Calendar className="h-3 w-3 mr-1" />
                       <span>
                         Created {new Date(party.createdAt).toLocaleDateString()}
                       </span>
