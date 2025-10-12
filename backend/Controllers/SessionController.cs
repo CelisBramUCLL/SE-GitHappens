@@ -1,6 +1,8 @@
-﻿using Dotnet_test.Domain;
+﻿using System.Security.Claims;
+using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Session;
+using Dotnet_test.DTOs.Song;
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -119,6 +121,46 @@ namespace Dotnet_test.Controllers
                 return NotFound(new { message = "Participant not found" });
 
             return Ok(participant);
+        }
+
+        [Authorize]
+        [HttpPost("add-song")]
+        public async Task<IActionResult> AddSongToCurrentSession([FromBody] AddSongDTO dto)
+        {
+            try
+            {
+                int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                // The repository will find the active session for this user automatically
+                var playlistSongDto = await _sessionRepository.AddSongToCurrentSession(userId, dto);
+
+                return Ok(playlistSongDto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("remove-song")]
+        public async Task<IActionResult> RemoveSong([FromBody] RemoveSongDTO dto)
+        {
+            try
+            {
+                // Get logged-in user id from JWT
+                int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                var removedSong = await _sessionRepository.RemoveSongFromCurrentSession(
+                    userId,
+                    dto
+                );
+                return Ok(removedSong);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }
