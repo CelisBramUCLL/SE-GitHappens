@@ -1,77 +1,85 @@
-using Backend.Data;
-using Backend.Models;
-using Backend.Util;
+using System.Text;
+using System.Text.Json.Serialization;
+using Dotnet_test.Infrastructure;
+using Dotnet_test.Interfaces;
+using Dotnet_test.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Variables
-var allowedOrigins =
-    builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-var apiVersion = builder.Configuration["ApiVersion"] ?? "v1";
-var basePath = $"/api/{apiVersion}";
+// Add services to the container.
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // serialize enums as strings in API responses
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
-// Database Connection
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Host=localhost;Database=UserManagementDB;Username=postgres;Password=your_password_here";
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 
-// Services
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(
-        "AllowFrontend",
-        policy =>
+// Register db context
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
+
+// Allow cross origin requests
+builder.Services.AddCors(p =>
+    p.AddPolicy(
+        "defaultPolicy",
+        builder =>
         {
-            policy
-                .WithOrigins(allowedOrigins)
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .SetIsOriginAllowed(origin => true) // Allow any origin for debugging
-                .AllowCredentials();
+            _ = builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
         }
-    );
-});
+    )
+);
+
+// Register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+builder.Services.AddScoped<ISongRepository, SongRepository>();
+
+// Add JWT Authentication
+builder
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+            ),
+        };
+    });
 
 var app = builder.Build();
 
-// Optional database seeding in development or when explicitly requested
-if (
-    app.Environment.IsDevelopment()
-    || Environment.GetEnvironmentVariable("SEED_DATABASE") == "true"
-)
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    // Apply any pending migrations
-    await context.Database.MigrateAsync();
-
-    // Seed database if needed
-    await DatabaseSeeder.SeedDatabase(context);
-
-    // If seeding was explicitly requested, exit after seeding
-    if (Environment.GetEnvironmentVariable("SEED_DATABASE") == "true")
-    {
-        Console.WriteLine("Database seeding completed. Exiting...");
-        Environment.Exit(0);
-    }
-}
-
-// Middleware
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.UseCors("defaultPolicy");
 }
 
-app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
-var baseGroup = app.MapGroup(basePath);
-baseGroup.MapUserEndpoints(basePath);
+// Enable authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
