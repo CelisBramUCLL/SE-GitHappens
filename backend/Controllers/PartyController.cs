@@ -84,8 +84,8 @@ namespace Dotnet_test.Controllers
         {
             var deleted = await _partyRepository.Delete(id);
             if (!deleted)
-                return NotFound($"Party with id {id} not found");
-            return Ok($"Party with id {id} deleted");
+                return NotFound(new { error = $"Party with id {id} not found" });
+            return Ok(new { message = $"Party with id {id} deleted successfully", success = true });
         }
 
         [Authorize]
