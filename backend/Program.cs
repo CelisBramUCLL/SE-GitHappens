@@ -1,43 +1,59 @@
-using Backend.Models;
+using System.Text.Json.Serialization;
+using Dotnet_test.Infrastructure;
+using Dotnet_test.Interfaces;
+using Dotnet_test.Repository;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Variables
-var allowedOrigins = builder.Configuration
-    .GetSection("AllowedOrigins")
-    .Get<string[]>() ?? Array.Empty<string>();
-var apiVersion = builder.Configuration["ApiVersion"] ?? "v1";
-var basePath = $"/api/{apiVersion}";
+// Add services to the container.
 
-// Services
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<List<Todo>>();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
+builder.Services.AddControllers();
+
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+
+// register db context
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
+
+// allow cross origin requests
+builder.Services.AddCors(p =>
+    p.AddPolicy(
+        "defaultPolicy",
+        builder =>
+        {
+            _ = builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+        }
+    )
+);
+
+// to serialize enums as strings in api responses
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
     {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .SetIsOriginAllowed(origin => true) // Allow any origin for debugging
-              .AllowCredentials();
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-});
+    
+// register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+
 
 var app = builder.Build();
 
-// Middleware`
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.UseCors("defaultPolicy");
 }
 
-app.UseCors("AllowFrontend");
-app.UseHttpsRedirection();  
+app.UseHttpsRedirection();
 
+app.UseAuthorization();
 
-var baseGroup = app.MapGroup(basePath);
-baseGroup.MapTodoEndpoints(basePath);
+app.MapControllers();
 
 app.Run();
