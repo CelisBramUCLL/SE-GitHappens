@@ -1,4 +1,4 @@
-﻿namespace Dotnet_test.Domain
+namespace Dotnet_test.Domain
 {
     public enum Status
     {
@@ -6,7 +6,7 @@
         Ended,
     }
 
-    public class Session
+    public class Party
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

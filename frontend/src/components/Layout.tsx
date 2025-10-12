@@ -35,10 +35,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/sessions"
+                  to="/parties"
                   className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Sessions
+                  Parties
                 </Link>
                 <Link
                   to="/songs"

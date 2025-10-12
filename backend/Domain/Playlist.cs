@@ -6,9 +6,9 @@
 
         public string Name { get; set; } = string.Empty;
 
-        // FK to session
-        public int SessionId { get; set; }
-        public Session Session { get; set; } = null!;
+        // FK to party
+        public int PartyId { get; set; }
+        public Party Party { get; set; } = null!;
 
         // Navigation
         public ICollection<PlaylistSong> Songs { get; set; } = new List<PlaylistSong>();

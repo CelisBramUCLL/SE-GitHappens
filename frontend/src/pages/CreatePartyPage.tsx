@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { sessionService } from '../services/session.service';
+import { partyService } from '../services/party.service';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
-export const CreateSessionPage: React.FC = () => {
-  const [sessionName, setSessionName] = useState('');
+export const CreatePartyPage: React.FC = () => {
+  const [partyName, setPartyName] = useState('');
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
   const queryClient = useQueryClient();	
 
-  const createSessionMutation = useMutation({
-    mutationFn: (data: { name: string }) => sessionService.create(data),
-    onSuccess: (session: any) => {
-      queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      navigate(`/sessions/${session.id}`);
+  const createPartyMutation = useMutation({
+    mutationFn: (data: { name: string }) => partyService.create(data),
+    onSuccess: (party: any) => {
+      queryClient.invalidateQueries({ queryKey: ['parties'] });
+      navigate(`/parties/${party.id}`);
     },
     onError: (error) => {
-      setError(error instanceof Error ? error.message : 'Failed to create session');
+      setError(error instanceof Error ? error.message : 'Failed to create party');
     },
   });
 
@@ -28,12 +28,12 @@ export const CreateSessionPage: React.FC = () => {
     e.preventDefault();
     setError('');
     
-    if (!sessionName.trim()) {
-      setError('Session name is required');
+    if (!partyName.trim()) {
+      setError('Party name is required');
       return;
     }
 
-    createSessionMutation.mutate({ name: sessionName.trim() });
+    createPartyMutation.mutate({ name: partyName.trim() });
   };
 
   return (
@@ -47,23 +47,23 @@ export const CreateSessionPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">Create New Session</h1>
-          <p className="text-gray-600">Start a new collaborative music session</p>
+          <h1 className="text-2xl font-bold text-gray-900">Create New Party</h1>
+          <p className="text-gray-600">Start a new collaborative music party</p>
         </div>
 
         <div className="bg-white shadow rounded-lg">
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div>
-              <label htmlFor="sessionName" className="block text-sm font-medium text-gray-700">
-                Session Name
+              <label htmlFor="partyName" className="block text-sm font-medium text-gray-700">
+                Party Name
               </label>
               <input
                 type="text"
-                id="sessionName"
+                id="partyName"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
-                placeholder="Enter a name for your session"
-                value={sessionName}
-                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="Enter a name for your party"
+                value={partyName}
+                onChange={(e) => setPartyName(e.target.value)}
                 required
               />
               <p className="mt-2 text-sm text-gray-500">
@@ -80,10 +80,10 @@ export const CreateSessionPage: React.FC = () => {
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-sm font-medium text-blue-900 mb-2">What happens next?</h3>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• You'll become the host of this session</li>
-                <li>• Others can join using the session ID</li>
+                <li>• You'll become the host of this party</li>
+                <li>• Others can join using the party ID</li>
                 <li>• Everyone can add songs to the shared playlist</li>
-                <li>• You can manage the session and its participants</li>
+                <li>• You can manage the party and its participants</li>
               </ul>
             </div>
 
@@ -91,15 +91,15 @@ export const CreateSessionPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/sessions')}
+                onClick={() => navigate('/parties')}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={createSessionMutation.isPending || !sessionName.trim()}
+                disabled={createPartyMutation.isPending || !partyName.trim()}
               >
-                {createSessionMutation.isPending ? 'Creating...' : 'Create Session'}
+                {createPartyMutation.isPending ? 'Creating...' : 'Create Party'}
               </Button>
             </div>
           </form>

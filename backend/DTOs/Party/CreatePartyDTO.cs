@@ -1,6 +1,6 @@
-﻿namespace Dotnet_test.DTOs.Session
+namespace Dotnet_test.DTOs.Party
 {
-    public class CreateSessionDto
+    public class CreatePartyDto
     {
         public string Name { get; set; } = string.Empty;
     }

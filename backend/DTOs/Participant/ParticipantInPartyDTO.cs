@@ -1,14 +1,10 @@
-﻿using Dotnet_test.DTOs.User;
-
 namespace Dotnet_test.DTOs.Participant
 {
-    public class ParticipantDTO
+    public class ParticipantInPartyDTO
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int PartyId { get; set; }
+        public string UserName { get; set; }
         public DateTime JoinedAt { get; set; }
-
-        public HostUserDTO? User { get; set; }
     }
 }

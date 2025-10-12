@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { sessionService } from '../services/session.service';
+import { partyService } from '../services/party.service';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Layout } from '../components/Layout';
@@ -19,7 +19,7 @@ import {
   UserMinus 
 } from 'lucide-react';
 
-export const SessionDetailPage: React.FC = () => {
+export const PartyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -27,40 +27,40 @@ export const SessionDetailPage: React.FC = () => {
   const toast = useToast();
   const [showStopConfirm, setShowStopConfirm] = useState(false);
 
-  const { data: session, isLoading, error } = useQuery({
-    queryKey: ['session', id],
-    queryFn: () => sessionService.getById(Number(id)),
+  const { data: party, isLoading, error } = useQuery({
+    queryKey: ['party', id],
+    queryFn: () => partyService.getById(Number(id)),
     enabled: !!id,
   });
 
-  const sessionData = session as any;
+  const partyData = party as any;
 
-  const joinSessionMutation = useMutation({
-    mutationFn: () => sessionService.join(Number(id)),
+  const joinPartyMutation = useMutation({
+    mutationFn: () => partyService.join(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['session', id] });
-      toast.success('Successfully joined the session!');
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
+      toast.success('Successfully joined the party!');
     },
     onError: () => {
-      toast.error('Failed to join session. Please try again.');
+      toast.error('Failed to join party. Please try again.');
     },
   });
 
-  const leaveSessionMutation = useMutation({
-    mutationFn: () => sessionService.leave(Number(id)),
+  const leavePartyMutation = useMutation({
+    mutationFn: () => partyService.leave(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['session', id] });
-      toast.success('Successfully left the session.');
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
+      toast.success('Successfully left the party.');
     },
     onError: () => {
-      toast.error('Failed to leave session. Please try again.');
+      toast.error('Failed to leave party. Please try again.');
     },
   });
 
   const removeSongMutation = useMutation({
-    mutationFn: (songId: number) => sessionService.removeSong(songId),
+    mutationFn: (songId: number) => partyService.removeSong(songId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['session', id] });
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
       toast.success('Song removed from playlist.');
     },
     onError: () => {
@@ -68,35 +68,35 @@ export const SessionDetailPage: React.FC = () => {
     },
   });
 
-  const deleteSessionMutation = useMutation({
-    mutationFn: () => sessionService.delete(Number(id)),
+  const deletePartyMutation = useMutation({
+    mutationFn: () => partyService.delete(Number(id)),
     onSuccess: () => {
-      toast.success('Session stopped successfully.');
-      navigate('/sessions');
+      toast.success('Party stopped successfully.');
+      navigate('/parties');
     },
     onError: () => {
-      toast.error('Failed to stop session. Please try again.');
+      toast.error('Failed to stop party. Please try again.');
     },
   });
 
-  const handleJoinSession = () => {
-    joinSessionMutation.mutate();
+  const handleJoinParty = () => {
+    joinPartyMutation.mutate();
   };
 
-  const handleLeaveSession = () => {
-    leaveSessionMutation.mutate();
+  const handleLeaveParty = () => {
+    leavePartyMutation.mutate();
   };
 
   const handleRemoveSong = (songId: number) => {
     removeSongMutation.mutate(songId);
   };
 
-  const handleStopSession = () => {
+  const handleStopParty = () => {
     setShowStopConfirm(true);
   };
 
-  const confirmStopSession = () => {
-    deleteSessionMutation.mutate();
+  const confirmStopParty = () => {
+    deletePartyMutation.mutate();
   };
 
   const handleAddSongsNavigation = () => {
@@ -113,20 +113,20 @@ export const SessionDetailPage: React.FC = () => {
     );
   }
 
-  if (error || !sessionData) {
+  if (error || !partyData) {
     return (
       <Layout>
         <div className="rounded-md bg-red-50 p-4">
           <div className="text-sm text-red-700">
-            Error loading session: {error instanceof Error ? error.message : 'Session not found'}
+            Error loading party: {error instanceof Error ? error.message : 'Party not found'}
           </div>
         </div>
       </Layout>
     );
   }
 
-  const isHost = sessionData?.hostUser?.id === user?.id;
-  const isParticipant = isHost || sessionData?.participants?.some((p: any) => p.userName === user?.username);
+  const isHost = partyData?.hostUser?.id === user?.id;
+  const isParticipant = isHost || partyData?.participants?.some((p: any) => p.userName === user?.username);
 
   return (
     <Layout>
@@ -134,11 +134,11 @@ export const SessionDetailPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigate('/sessions')}
+              onClick={() => navigate('/parties')}
               className="flex items-center text-sm text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Sessions
+              Back to Parties
             </button>
           </div>
         </div>
@@ -147,50 +147,50 @@ export const SessionDetailPage: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{sessionData.name}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{partyData.name}</h1>
                 <p className="text-gray-600">
-                  Hosted by {sessionData.hostUser?.username}
+                  Hosted by {partyData.hostUser?.username}
                   {isHost && <span className="ml-2 text-blue-600">(You)</span>}
                 </p>
               </div>
               <div className="flex items-center space-x-3">
                 <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                  sessionData.status === 'Active' 
+                  partyData.status === 'Active' 
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {sessionData.status}
+                  {partyData.status}
                 </span>
-                {sessionData.status === 'Active' && !isParticipant && (
+                {partyData.status === 'Active' && !isParticipant && (
                   <Button
-                    onClick={handleJoinSession}
-                    disabled={joinSessionMutation.isPending}
+                    onClick={handleJoinParty}
+                    disabled={joinPartyMutation.isPending}
                     className="flex items-center space-x-2"
                   >
                     <UserPlus className="h-4 w-4" />
-                    <span>{joinSessionMutation.isPending ? 'Joining...' : 'Join Session'}</span>
+                    <span>{joinPartyMutation.isPending ? 'Joining...' : 'Join Party'}</span>
                   </Button>
                 )}
                 {isParticipant && !isHost && (
                   <Button
                     variant="outline"
-                    onClick={handleLeaveSession}
-                    disabled={leaveSessionMutation.isPending}
+                    onClick={handleLeaveParty}
+                    disabled={leavePartyMutation.isPending}
                     className="flex items-center space-x-2"
                   >
                     <UserMinus className="h-4 w-4" />
-                    <span>{leaveSessionMutation.isPending ? 'Leaving...' : 'Leave Session'}</span>
+                    <span>{leavePartyMutation.isPending ? 'Leaving...' : 'Leave Party'}</span>
                   </Button>
                 )}
-                {isHost && sessionData.status === 'Active' && (
+                {isHost && partyData.status === 'Active' && (
                   <Button
                     variant="destructive"
-                    onClick={handleStopSession}
-                    disabled={deleteSessionMutation.isPending}
+                    onClick={handleStopParty}
+                    disabled={deletePartyMutation.isPending}
                     className="flex items-center space-x-2"
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span>{deleteSessionMutation.isPending ? 'Stopping...' : 'Stop Session'}</span>
+                    <span>{deletePartyMutation.isPending ? 'Stopping...' : 'Stop Party'}</span>
                   </Button>
                 )}
               </div>
@@ -218,8 +218,8 @@ export const SessionDetailPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {sessionData.playlist?.songs && sessionData.playlist.songs.length > 0 ? (
-                    sessionData.playlist.songs.map((song: any, index: number) => (
+                  {partyData.playlist?.songs && partyData.playlist.songs.length > 0 ? (
+                    partyData.playlist.songs.map((song: any, index: number) => (
                       <div key={song.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -262,7 +262,7 @@ export const SessionDetailPage: React.FC = () => {
               <div>
                 <h3 className="text-lg font-medium text-gray-900 flex items-center mb-4">
                   <Users className="h-5 w-5 mr-2" />
-                  Participants ({sessionData.participants?.length || 0})
+                  Participants ({partyData.participants?.length || 0})
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
@@ -271,14 +271,14 @@ export const SessionDetailPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {sessionData.hostUser?.username}
+                        {partyData.hostUser?.username}
                         {isHost && <span className="ml-1 text-blue-600">(You)</span>}
                       </p>
                       <p className="text-xs text-gray-500">Host</p>
                     </div>
                   </div>
-                  {sessionData.participants?.filter((participant: any) => 
-                    participant.userName !== sessionData.hostUser?.username
+                  {partyData.participants?.filter((participant: any) => 
+                    participant.userName !== partyData.hostUser?.username
                   ).map((participant: any) => (
                     <div key={participant.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                       <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -308,12 +308,10 @@ export const SessionDetailPage: React.FC = () => {
       <ConfirmDialog
         isOpen={showStopConfirm}
         onClose={() => setShowStopConfirm(false)}
-        onConfirm={confirmStopSession}
-        title="Stop Session"
-        message="Are you sure you want to stop this session? This action cannot be undone."
-        confirmText="Stop Session"
-        cancelText="Cancel"
-        type="danger"
+        onConfirm={confirmStopParty}
+        title="Stop Party"
+        message="Are you sure you want to stop this party? This action cannot be undone."
+        confirmText="Stop Party"
       />
     </Layout>
   );

@@ -10,7 +10,7 @@ namespace Dotnet_test.Infrastructure
 
         //DbSets for application entities
         public DbSet<User> Users { get; set; }
-        public DbSet<Session> Sessions { get; set; }
+        public DbSet<Party> Parties { get; set; }
         public DbSet<Participant> Participants { get; set; }
         public DbSet<Playlist> Playlists { get; set; }
         public DbSet<Song> Songs { get; set; }
@@ -20,11 +20,11 @@ namespace Dotnet_test.Infrastructure
         {
             base.OnModelCreating(modelBuilder);
 
-            // Deleting a user deletes hosted sessions
+            // Deleting a user deletes hosted parties
             modelBuilder
-                .Entity<Session>()
+                .Entity<Party>()
                 .HasOne(s => s.HostUser)
-                .WithMany(u => u.HostedSessions)
+                .WithMany(u => u.HostedParties)
                 .HasForeignKey(s => s.HostUserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -32,16 +32,16 @@ namespace Dotnet_test.Infrastructure
             modelBuilder
                 .Entity<Participant>()
                 .HasOne(p => p.User)
-                .WithMany(u => u.SessionsJoined)
+                .WithMany(u => u.PartiesJoined)
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Deleting a session deletes participants in that session
+            // Deleting a party deletes participants in that party
             modelBuilder
                 .Entity<Participant>()
-                .HasOne(p => p.Session)
+                .HasOne(p => p.Party)
                 .WithMany(s => s.Participants)
-                .HasForeignKey(p => p.SessionId)
+                .HasForeignKey(p => p.PartyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // PlaylistSongs → User

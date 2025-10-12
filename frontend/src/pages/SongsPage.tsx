@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Music, Clock } from 'lucide-react';
 import { songService } from '../services/song.service';
-import { sessionService } from '../services/session.service';
+import { partyService } from '../services/party.service';
 import { Layout } from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
 
@@ -47,14 +47,14 @@ export default function SongsPage() {
 
   const handleAddSong = async (songId: number) => {
     try {
-      await sessionService.addSong(songId);
-      // Invalidate session queries to refresh session data
-      queryClient.invalidateQueries({ queryKey: ['session'] });
-      queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      toast.success('Song added to your current session!');
+      await partyService.addSong(songId);
+      // Invalidate party queries to refresh party data
+      queryClient.invalidateQueries({ queryKey: ['party'] });
+      queryClient.invalidateQueries({ queryKey: ['parties'] });
+      toast.success('Song added to your current party!');
     } catch (error) {
       console.error('Failed to add song:', error);
-      toast.error('Failed to add song. Make sure you are in an active session.');
+      toast.error('Failed to add song. Make sure you are in an active party.');
     }
   };
 
@@ -92,7 +92,7 @@ export default function SongsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Browse Songs</h1>
         <p className="text-gray-600 mb-6">
-          Search and add songs to your current session
+          Search and add songs to your current party
         </p>
 
         {/* Search Bar */}
