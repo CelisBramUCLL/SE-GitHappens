@@ -25,7 +25,7 @@ class SignalRService {
       .withUrl(`${baseUrl}/partyHub`, {
         withCredentials: true, // Enable credentials for CORS
         skipNegotiation: false,
-        transport: undefined // Let SignalR choose the best transport
+        transport: undefined
       })
       .configureLogging(LogLevel.Information)
       .withAutomaticReconnect([0, 2000, 10000, 30000]) // Auto-reconnect with backoff
@@ -92,7 +92,7 @@ class SignalRService {
     }
   }
 
-  // Notify song added
+
   async notifySongAdded(partyId: number, songId: number): Promise<void> {
     if (this.connection?.state === 'Connected') {
       await this.connection.invoke('NotifySongAdded', partyId, songId);
@@ -100,7 +100,7 @@ class SignalRService {
     }
   }
 
-  // Notify song removed
+
   async notifySongRemoved(partyId: number, songId: number): Promise<void> {
     if (this.connection?.state === 'Connected') {
       await this.connection.invoke('NotifySongRemoved', partyId, songId);
@@ -108,7 +108,7 @@ class SignalRService {
     }
   }
 
-  // Set up event listeners
+
   onUserJoinedParty(callback: (userId: number, partyId: number) => void): void {
     this.connection?.on('UserJoinedParty', callback);
   }
@@ -137,16 +137,16 @@ class SignalRService {
     this.connection?.on('PartyDeletedGlobal', callback);
   }
 
-  // Remove event listeners
+
   off(eventName: string): void {
     this.connection?.off(eventName);
   }
 
-  // Get connection state
+
   get isConnected(): boolean {
     return this.connection?.state === 'Connected';
   }
 }
 
-// Export a singleton instance
+
 export const signalRService = new SignalRService();

@@ -64,7 +64,7 @@ namespace Dotnet_test.Controllers
             {
                 var partyDto = await _partyRepository.Create(party);
 
-                // Send SignalR notification to all users about the new party
+                // Notify all users of new party
                 await _hubContext.Clients.All.SendAsync("PartyCreated", partyDto);
 
                 return CreatedAtAction(nameof(GetById), new { id = partyDto.Id }, partyDto);
@@ -102,13 +102,12 @@ namespace Dotnet_test.Controllers
             if (party == null)
                 return NotFound(new { error = $"Party with id {id} not found" });
 
-            // Send SignalR notification to all users in the party before deletion
-            // Include the host's user ID so frontend can decide whether to show the toast
+            // Notify party members
             await _hubContext
                 .Clients.Group($"Party_{id}")
                 .SendAsync("PartyDeleted", id, hostUserId);
 
-            // Send SignalR notification to all users for dashboard updates
+            // Notify all users for dashboard updates
             await _hubContext.Clients.All.SendAsync("PartyDeletedGlobal", id);
 
             var deleted = await _partyRepository.Delete(id);
@@ -133,7 +132,7 @@ namespace Dotnet_test.Controllers
 
                 var participant = await _partyRepository.JoinParty(dto, loggedInUserId);
 
-                // Broadcast to SignalR clients that a user joined the party
+                // Notify party members of new participant
                 await _hubContext
                     .Clients.Group($"Party_{dto.PartyId}")
                     .SendAsync("UserJoinedParty", loggedInUserId, dto.PartyId);
@@ -163,7 +162,7 @@ namespace Dotnet_test.Controllers
                 if (participant == null)
                     return NotFound("Participant not found or user not in this party");
 
-                // Broadcast to SignalR clients that a user left the party
+                // Notify party members of participant leaving
                 await _hubContext
                     .Clients.Group($"Party_{id}")
                     .SendAsync("UserLeftParty", loggedInUserId, id);
@@ -189,7 +188,7 @@ namespace Dotnet_test.Controllers
 
                 int loggedInUserId = int.Parse(userIdClaim.Value);
 
-                // First, get the current party to get the party ID for SignalR
+                // Get current party for notifications
                 var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
                 if (currentParty == null)
                     return BadRequest("User is not in any active party");
@@ -199,7 +198,7 @@ namespace Dotnet_test.Controllers
                     dto
                 );
 
-                // Send SignalR notification to all users in the party
+                // Notify party members of song addition
                 await _hubContext
                     .Clients.Group($"Party_{currentParty.Id}")
                     .SendAsync("SongAdded", dto.SongId, "server");
@@ -225,7 +224,7 @@ namespace Dotnet_test.Controllers
 
                 int loggedInUserId = int.Parse(userIdClaim.Value);
 
-                // First, get the current party to get the party ID for SignalR
+                // Get current party for notifications
                 var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
                 if (currentParty == null)
                     return BadRequest("User is not in any active party");
@@ -235,7 +234,7 @@ namespace Dotnet_test.Controllers
                     dto
                 );
 
-                // Send SignalR notification to all users in the party
+                // Notify party members of song removal
                 await _hubContext
                     .Clients.Group($"Party_{currentParty.Id}")
                     .SendAsync("SongRemoved", dto.SongId, "server");
@@ -274,7 +273,6 @@ namespace Dotnet_test.Controllers
             }
         }
 
-        // TODO: Add remaining methods (Update, Delete, Join, Leave, AddSong, RemoveSong)
         // These will be implemented as we continue the conversion
     }
 }

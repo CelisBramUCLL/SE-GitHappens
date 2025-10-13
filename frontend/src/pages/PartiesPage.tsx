@@ -12,7 +12,7 @@ export const PartiesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
-  // Set up global SignalR event listeners for party updates
+
   useGlobalPartyEvents('Parties');
 
   const { data: parties, isLoading, error } = useQuery({
@@ -20,10 +20,7 @@ export const PartiesPage: React.FC = () => {
     queryFn: () => partyService.getAll(),
   });
 
-  // Debug: Log when parties data changes
-  useEffect(() => {
-    console.log('🔍 [Parties] Parties data changed:', parties);
-  }, [parties]);
+
 
   const joinPartyMutation = useMutation({
     mutationFn: (partyId: number) => partyService.join(partyId),
@@ -48,7 +45,7 @@ export const PartiesPage: React.FC = () => {
     }
   };
 
-  // Helper function to check if current user is already in the party
+
   const isUserInParty = (party: any) => {
     if (!user || !party.participants) return false;
     return party.participants.some((participant: any) => 
@@ -56,7 +53,7 @@ export const PartiesPage: React.FC = () => {
     );
   };
 
-  // Helper function to check if current user is the host
+
   const isUserHost = (party: any) => {
     if (!user || !party.hostUser) return false;
     return party.hostUser.username === user.username;

@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button';
 import { Plus, Users, Music, Clock } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
-  // Set up global SignalR event listeners for party updates
+
   useGlobalPartyEvents('Dashboard');
   
   const { data: parties, isLoading, error } = useQuery({

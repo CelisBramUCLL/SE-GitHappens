@@ -15,9 +15,9 @@ export const useSignalR = (): UseSignalRReturn => {
   useEffect(() => {
     let mounted = true;
     
-    // Connect to SignalR when hook mounts
+
     const connect = async () => {
-      // Check if already connected
+
       if (signalRService.isConnected) {
         setIsConnected(true);
         return;
@@ -38,7 +38,7 @@ export const useSignalR = (): UseSignalRReturn => {
 
     connect();
 
-    // Cleanup on unmount - but don't disconnect the singleton service
+
     return () => {
       mounted = false;
     };

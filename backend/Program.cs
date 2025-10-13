@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure services
 builder
     .Services.AddControllers()
     .AddJsonOptions(options =>
@@ -27,7 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// Allow cross origin requests - SignalR compatible CORS
+// CORS configuration
 builder.Services.AddCors(p =>
     p.AddPolicy(
         "defaultPolicy",
@@ -42,7 +42,7 @@ builder.Services.AddCors(p =>
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowCredentials(); // Required for SignalR
+                .AllowCredentials();
         }
     )
 );
@@ -52,10 +52,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPartyRepository, PartyRepository>();
 builder.Services.AddScoped<ISongRepository, SongRepository>();
 
-// Add SignalR
 builder.Services.AddSignalR();
 
-// Add JWT Authentication
+// JWT Authentication
 builder
     .Services.AddAuthentication(options =>
     {
@@ -87,7 +86,7 @@ if (app.Environment.IsDevelopment())
     app.UseCors("defaultPolicy");
 }
 
-// Only use HTTPS redirection in production to allow SignalR HTTP connections in development
+// HTTPS redirection for production only
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -97,7 +96,7 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map SignalR hubs
+
 app.MapHub<PartyHub>("/partyHub");
 
 app.MapControllers();

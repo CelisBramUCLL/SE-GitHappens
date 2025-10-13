@@ -29,10 +29,7 @@ export const PartyDetailPage: React.FC = () => {
   const toast = useToast();
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   
-  // SignalR integration
   const { isConnected } = useSignalR();
-  
-  // Track if we've already set up listeners for this party
   const [listenersSetUp, setListenersSetUp] = useState<string | null>(null);
 
   const { data: party, isLoading, error } = useQuery({
@@ -43,36 +40,34 @@ export const PartyDetailPage: React.FC = () => {
 
   const partyData = party as any;
 
-  // Set up SignalR event listeners
+
   useEffect(() => {
     if (!isConnected || !id) return;
     
-    // Prevent setting up listeners multiple times for the same party
+
     if (listenersSetUp === id) return;
 
-    // Create event handlers with proper cleanup
+
     const handleUserJoined = (_userId: number, partyId: number) => {
       if (partyId === Number(id)) {
         queryClient.invalidateQueries({ queryKey: ['party', id] });
-        // Real-time update - no toast needed, HTTP API already shows success
+
       }
     };
 
     const handleUserLeft = (_userId: number, partyId: number) => {
       if (partyId === Number(id)) {
         queryClient.invalidateQueries({ queryKey: ['party', id] });
-        // Real-time update - no toast needed
+
       }
     };
 
     const handleSongAdded = (_songId: number, _connectionId: string) => {
       queryClient.invalidateQueries({ queryKey: ['party', id] });
-      // Real-time update - no toast needed
     };
 
     const handleSongRemoved = (_songId: number, _connectionId: string) => {
       queryClient.invalidateQueries({ queryKey: ['party', id] });
-      // Real-time update - no toast needed
     };
 
     const handlePartyDeleted = (partyId: number, hostUserId: number) => {
@@ -81,7 +76,7 @@ export const PartyDetailPage: React.FC = () => {
         if (user?.id !== hostUserId) {
           toast.info('Party has been deleted by the host');
         }
-        navigate('/dashboard'); // Redirect to dashboard for everyone
+        navigate('/dashboard');
       }
     };
 
@@ -92,7 +87,7 @@ export const PartyDetailPage: React.FC = () => {
     signalRService.onSongRemoved(handleSongRemoved);
     signalRService.onPartyDeleted(handlePartyDeleted);
 
-    // Auto-join the SignalR party group with retry logic
+
     const joinWithRetry = async () => {
       let attempts = 0;
       const maxAttempts = 5;
@@ -101,53 +96,45 @@ export const PartyDetailPage: React.FC = () => {
         try {
           if (signalRService.isConnected) {
             await signalRService.joinParty(Number(id));
-            console.log(`✅ Successfully joined party ${id} (attempt ${attempts + 1})`);
+            console.log(`Successfully joined party ${id} (attempt ${attempts + 1})`);
             break;
           } else {
-            console.log(`⏳ SignalR not ready, waiting... (attempt ${attempts + 1})`);
+            console.log(`SignalR not ready, waiting... (attempt ${attempts + 1})`);
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         } catch (error) {
-          console.error(`❌ Failed to join party ${id} (attempt ${attempts + 1}):`, error);
+          console.error(`Failed to join party ${id} (attempt ${attempts + 1}):`, error);
           await new Promise(resolve => setTimeout(resolve, 200));
         }
         attempts++;
       }
       
       if (attempts === maxAttempts) {
-        console.error(`❌ Failed to join party ${id} after ${maxAttempts} attempts`);
+        console.error(`Failed to join party ${id} after ${maxAttempts} attempts`);
       }
     };
 
-    // Join the party group
     joinWithRetry();
 
-    // Mark listeners as set up for this party
     setListenersSetUp(id);
-
-    // Cleanup event listeners on unmount
     return () => {
       // Leave SignalR party group when leaving the page
       if (id) {
         signalRService.leaveParty(Number(id));
       }
-      
-      // Remove the specific event listeners
       signalRService.off('UserJoinedParty');
       signalRService.off('UserLeftParty');
       signalRService.off('SongAdded');
       signalRService.off('SongRemoved');
       signalRService.off('PartyDeleted');
       
-      // Reset listeners setup tracking
       setListenersSetUp(null);
     };
-  }, [isConnected, id]); // Keep dependencies but with improved retry logic
+  }, [isConnected, id]);
 
   const joinPartyMutation = useMutation({
     mutationFn: () => partyService.join(Number(id)),
     onSuccess: () => {
-      // SignalR broadcast is now handled by the backend automatically
       queryClient.invalidateQueries({ queryKey: ['party', id] });
       toast.success('Successfully joined the party!');
     },
@@ -159,7 +146,6 @@ export const PartyDetailPage: React.FC = () => {
   const leavePartyMutation = useMutation({
     mutationFn: () => partyService.leave(Number(id)),
     onSuccess: () => {
-      // SignalR broadcast is now handled by the backend automatically
       queryClient.invalidateQueries({ queryKey: ['party', id] });
       toast.success('Successfully left the party.');
     },
