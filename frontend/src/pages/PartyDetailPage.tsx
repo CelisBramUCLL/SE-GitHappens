@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useSignalR } from '../hooks/useSignalR';
+import { signalRService } from '../services/signalRService';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -26,6 +28,12 @@ export const PartyDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  
+  // SignalR integration
+  const { isConnected } = useSignalR();
+  
+  // Track if we've already set up listeners for this party
+  const [listenersSetUp, setListenersSetUp] = useState<string | null>(null);
 
   const { data: party, isLoading, error } = useQuery({
     queryKey: ['party', id],
@@ -35,9 +43,72 @@ export const PartyDetailPage: React.FC = () => {
 
   const partyData = party as any;
 
+  // Set up SignalR event listeners
+  useEffect(() => {
+    if (!isConnected || !id) return;
+    
+    // Prevent setting up listeners multiple times for the same party
+    if (listenersSetUp === id) return;
+
+    // Auto-join the SignalR party group when visiting the party page
+    signalRService.joinParty(Number(id));
+
+    // Create event handlers with proper cleanup
+    const handleUserJoined = (_userId: number, partyId: number) => {
+      if (partyId === Number(id)) {
+        queryClient.invalidateQueries({ queryKey: ['party', id] });
+        // Real-time update - no toast needed, HTTP API already shows success
+      }
+    };
+
+    const handleUserLeft = (_userId: number, partyId: number) => {
+      if (partyId === Number(id)) {
+        queryClient.invalidateQueries({ queryKey: ['party', id] });
+        // Real-time update - no toast needed
+      }
+    };
+
+    const handleSongAdded = (_songId: number, _connectionId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
+      // Real-time update - no toast needed
+    };
+
+    const handleSongRemoved = (_songId: number, _connectionId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
+      // Real-time update - no toast needed
+    };
+
+    // Set up event listeners
+    signalRService.onUserJoinedParty(handleUserJoined);
+    signalRService.onUserLeftParty(handleUserLeft);
+    signalRService.onSongAdded(handleSongAdded);
+    signalRService.onSongRemoved(handleSongRemoved);
+
+    // Mark listeners as set up for this party
+    setListenersSetUp(id);
+
+    // Cleanup event listeners on unmount
+    return () => {
+      // Leave SignalR party group when leaving the page
+      if (id) {
+        signalRService.leaveParty(Number(id));
+      }
+      
+      // Remove the specific event listeners
+      signalRService.off('UserJoinedParty');
+      signalRService.off('UserLeftParty');
+      signalRService.off('SongAdded');
+      signalRService.off('SongRemoved');
+      
+      // Reset listeners setup tracking
+      setListenersSetUp(null);
+    };
+  }, [isConnected, id]); // Removed the problematic dependencies
+
   const joinPartyMutation = useMutation({
     mutationFn: () => partyService.join(Number(id)),
     onSuccess: () => {
+      // SignalR broadcast is now handled by the backend automatically
       queryClient.invalidateQueries({ queryKey: ['party', id] });
       toast.success('Successfully joined the party!');
     },
@@ -49,6 +120,7 @@ export const PartyDetailPage: React.FC = () => {
   const leavePartyMutation = useMutation({
     mutationFn: () => partyService.leave(Number(id)),
     onSuccess: () => {
+      // SignalR broadcast is now handled by the backend automatically
       queryClient.invalidateQueries({ queryKey: ['party', id] });
       toast.success('Successfully left the party.');
     },

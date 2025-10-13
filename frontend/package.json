@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/signalr": "^9.0.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.1.13",

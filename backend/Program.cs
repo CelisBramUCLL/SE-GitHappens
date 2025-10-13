@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Dotnet_test.Hubs;
 using Dotnet_test.Infrastructure;
 using Dotnet_test.Interfaces;
 using Dotnet_test.Repository;
@@ -26,13 +27,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// Allow cross origin requests
+// Allow cross origin requests - SignalR compatible CORS
 builder.Services.AddCors(p =>
     p.AddPolicy(
         "defaultPolicy",
         builder =>
         {
-            _ = builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+            _ = builder
+                .WithOrigins(
+                    "http://localhost:5173", // Vite dev server
+                    "https://localhost:5173", // Vite dev server HTTPS
+                    "http://localhost:3000", // Alternative dev server
+                    "https://localhost:3000" // Alternative dev server HTTPS
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials(); // Required for SignalR
         }
     )
 );
@@ -41,6 +51,9 @@ builder.Services.AddCors(p =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPartyRepository, PartyRepository>();
 builder.Services.AddScoped<ISongRepository, SongRepository>();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 // Add JWT Authentication
 builder
@@ -72,13 +85,21 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseCors("defaultPolicy");
+    app.UseStaticFiles(); // Enable serving static files from wwwroot
 }
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in production to allow SignalR HTTP connections in development
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Enable authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Map SignalR hubs
+app.MapHub<PartyHub>("/partyHub");
 
 app.MapControllers();
 

@@ -3,9 +3,11 @@ using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Party;
 using Dotnet_test.DTOs.Song;
+using Dotnet_test.Hubs;
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Dotnet_test.Controllers
 {
@@ -14,10 +16,12 @@ namespace Dotnet_test.Controllers
     public class PartyController : ControllerBase
     {
         private readonly IPartyRepository _partyRepository;
+        private readonly IHubContext<PartyHub> _hubContext;
 
-        public PartyController(IPartyRepository partyRepository)
+        public PartyController(IPartyRepository partyRepository, IHubContext<PartyHub> hubContext)
         {
             _partyRepository = partyRepository;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -102,6 +106,12 @@ namespace Dotnet_test.Controllers
                 int loggedInUserId = int.Parse(userIdClaim.Value);
 
                 var participant = await _partyRepository.JoinParty(dto, loggedInUserId);
+
+                // Broadcast to SignalR clients that a user joined the party
+                await _hubContext
+                    .Clients.Group($"Party_{dto.PartyId}")
+                    .SendAsync("UserJoinedParty", loggedInUserId, dto.PartyId);
+
                 return Ok(participant);
             }
             catch (Exception ex)
@@ -126,6 +136,11 @@ namespace Dotnet_test.Controllers
                 var participant = await _partyRepository.LeaveParty(id, loggedInUserId);
                 if (participant == null)
                     return NotFound("Participant not found or user not in this party");
+
+                // Broadcast to SignalR clients that a user left the party
+                await _hubContext
+                    .Clients.Group($"Party_{id}")
+                    .SendAsync("UserLeftParty", loggedInUserId, id);
 
                 return Ok(participant);
             }
