@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User, LoginDTO, CreateUserDTO } from '../types';
-import { authService } from '../services/auth.service';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { User, LoginDTO, CreateUserDTO } from "../types";
+import { authService } from "../services/auth.service";
 
 interface AuthContextType {
   user: User | null;
@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -30,16 +30,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+
     if (token && userData) {
       try {
         setUser(JSON.parse(userData));
       } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        console.error("Error parsing user data:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
       }
     }
     setIsLoading(false);
@@ -48,18 +48,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginDTO) => {
     try {
       const response = await authService.login(credentials);
-      localStorage.setItem('token', response.token);
-      
+      localStorage.setItem("token", response.token);
+
       const userData: User = {
         id: response.id,
         username: response.username,
-        firstName: '',
-        lastName: '',
-        email: '',
-        role: 'User' as any
+        firstName: "",
+        lastName: "",
+        email: "",
+        role: "User" as any,
       };
-      
-      localStorage.setItem('user', JSON.stringify(userData));
+
+      localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
     } catch (error) {
       throw error;
@@ -71,11 +71,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const user = await authService.register(userData);
       const loginResponse = await authService.login({
         username: userData.username,
-        password: userData.password
+        password: userData.password,
       });
-      
-      localStorage.setItem('token', loginResponse.token);
-      localStorage.setItem('user', JSON.stringify(user));
+
+      localStorage.setItem("token", loginResponse.token);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
     } catch (error) {
       throw error;
@@ -83,8 +83,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
   };
 
