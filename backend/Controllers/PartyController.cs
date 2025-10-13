@@ -163,10 +163,21 @@ namespace Dotnet_test.Controllers
 
                 int loggedInUserId = int.Parse(userIdClaim.Value);
 
+                // First, get the current party to get the party ID for SignalR
+                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
+                if (currentParty == null)
+                    return BadRequest("User is not in any active party");
+
                 var playlistSong = await _partyRepository.AddSongToCurrentParty(
                     loggedInUserId,
                     dto
                 );
+
+                // Send SignalR notification to all users in the party
+                await _hubContext
+                    .Clients.Group($"Party_{currentParty.Id}")
+                    .SendAsync("SongAdded", dto.SongId, "server");
+
                 return Ok(playlistSong);
             }
             catch (Exception ex)
@@ -188,10 +199,21 @@ namespace Dotnet_test.Controllers
 
                 int loggedInUserId = int.Parse(userIdClaim.Value);
 
+                // First, get the current party to get the party ID for SignalR
+                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
+                if (currentParty == null)
+                    return BadRequest("User is not in any active party");
+
                 var playlistSong = await _partyRepository.RemoveSongFromCurrentParty(
                     loggedInUserId,
                     dto
                 );
+
+                // Send SignalR notification to all users in the party
+                await _hubContext
+                    .Clients.Group($"Party_{currentParty.Id}")
+                    .SendAsync("SongRemoved", dto.SongId, "server");
+
                 return Ok(playlistSong);
             }
             catch (Exception ex)
