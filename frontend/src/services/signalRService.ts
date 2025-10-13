@@ -2,6 +2,7 @@ import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signal
 
 class SignalRService {
   private connection: HubConnection | null = null;
+  private currentPartyId: number | null = null; // Track current party for auto-rejoin
 
   // Initialize connection
   async connect(): Promise<void> {
@@ -27,7 +28,31 @@ class SignalRService {
         transport: undefined // Let SignalR choose the best transport
       })
       .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect([0, 2000, 10000, 30000]) // Auto-reconnect with backoff
       .build();
+
+    // Set up connection event handlers
+    this.connection.onclose((error) => {
+      console.log('🔌 SignalR connection closed:', error);
+    });
+
+    this.connection.onreconnecting((error) => {
+      console.log('🔄 SignalR attempting to reconnect:', error);
+    });
+
+    this.connection.onreconnected(async (connectionId) => {
+      console.log('✅ SignalR reconnected with connection ID:', connectionId);
+      
+      // Auto-rejoin the current party if there was one
+      if (this.currentPartyId !== null) {
+        try {
+          await this.connection!.invoke('JoinParty', this.currentPartyId);
+          console.log(`🔄 Auto-rejoined party ${this.currentPartyId} after reconnection`);
+        } catch (error) {
+          console.error(`❌ Failed to auto-rejoin party ${this.currentPartyId}:`, error);
+        }
+      }
+    });
 
     try {
       await this.connection.start();
@@ -51,6 +76,7 @@ class SignalRService {
   async joinParty(partyId: number): Promise<void> {
     if (this.connection?.state === 'Connected') {
       await this.connection.invoke('JoinParty', partyId);
+      this.currentPartyId = partyId; // Track for auto-rejoin
       console.log(`📞 Joined party ${partyId}`);
     }
   }
@@ -59,6 +85,9 @@ class SignalRService {
   async leaveParty(partyId: number): Promise<void> {
     if (this.connection?.state === 'Connected') {
       await this.connection.invoke('LeaveParty', partyId);
+      if (this.currentPartyId === partyId) {
+        this.currentPartyId = null; // Clear tracking when leaving
+      }
       console.log(`📞 Left party ${partyId}`);
     }
   }

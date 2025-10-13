@@ -50,9 +50,6 @@ export const PartyDetailPage: React.FC = () => {
     // Prevent setting up listeners multiple times for the same party
     if (listenersSetUp === id) return;
 
-    // Auto-join the SignalR party group when visiting the party page
-    signalRService.joinParty(Number(id));
-
     // Create event handlers with proper cleanup
     const handleUserJoined = (_userId: number, partyId: number) => {
       if (partyId === Number(id)) {
@@ -78,11 +75,41 @@ export const PartyDetailPage: React.FC = () => {
       // Real-time update - no toast needed
     };
 
-    // Set up event listeners
+    // Set up event listeners first
     signalRService.onUserJoinedParty(handleUserJoined);
     signalRService.onUserLeftParty(handleUserLeft);
     signalRService.onSongAdded(handleSongAdded);
     signalRService.onSongRemoved(handleSongRemoved);
+
+    // Auto-join the SignalR party group with retry logic
+    const joinWithRetry = async () => {
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (attempts < maxAttempts) {
+        try {
+          if (signalRService.isConnected) {
+            await signalRService.joinParty(Number(id));
+            console.log(`✅ Successfully joined party ${id} (attempt ${attempts + 1})`);
+            break;
+          } else {
+            console.log(`⏳ SignalR not ready, waiting... (attempt ${attempts + 1})`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        } catch (error) {
+          console.error(`❌ Failed to join party ${id} (attempt ${attempts + 1}):`, error);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        attempts++;
+      }
+      
+      if (attempts === maxAttempts) {
+        console.error(`❌ Failed to join party ${id} after ${maxAttempts} attempts`);
+      }
+    };
+
+    // Join the party group
+    joinWithRetry();
 
     // Mark listeners as set up for this party
     setListenersSetUp(id);
@@ -103,7 +130,7 @@ export const PartyDetailPage: React.FC = () => {
       // Reset listeners setup tracking
       setListenersSetUp(null);
     };
-  }, [isConnected, id]); // Removed the problematic dependencies
+  }, [isConnected, id]); // Keep dependencies but with improved retry logic
 
   const joinPartyMutation = useMutation({
     mutationFn: () => partyService.join(Number(id)),
