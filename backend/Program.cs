@@ -85,7 +85,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseCors("defaultPolicy");
-    app.UseStaticFiles(); // Enable serving static files from wwwroot
 }
 
 // Only use HTTPS redirection in production to allow SignalR HTTP connections in development
