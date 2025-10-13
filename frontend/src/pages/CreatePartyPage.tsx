@@ -13,7 +13,7 @@ export const CreatePartyPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Check if user already has an active party
+
   const { data: activePartyData, isLoading: isCheckingActiveParty } = useQuery({
     queryKey: ['my-active-party'],
     queryFn: () => partyService.getMyActiveParty(),

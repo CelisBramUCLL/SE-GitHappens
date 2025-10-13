@@ -2,11 +2,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
+import { useGlobalPartyEvents } from '../hooks/useGlobalPartyEvents';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { Plus, Users, Music, Clock } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
+
+  useGlobalPartyEvents('Dashboard');
+  
   const { data: parties, isLoading, error } = useQuery({
     queryKey: ['parties'],
     queryFn: () => partyService.getAll(),

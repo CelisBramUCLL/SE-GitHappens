@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useSignalR } from '../hooks/useSignalR';
+import { signalRService } from '../services/signalRService';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -26,6 +28,9 @@ export const PartyDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  
+  const { isConnected } = useSignalR();
+  const [listenersSetUp, setListenersSetUp] = useState<string | null>(null);
 
   const { data: party, isLoading, error } = useQuery({
     queryKey: ['party', id],
@@ -34,6 +39,98 @@ export const PartyDetailPage: React.FC = () => {
   });
 
   const partyData = party as any;
+
+
+  useEffect(() => {
+    if (!isConnected || !id) return;
+    
+
+    if (listenersSetUp === id) return;
+
+
+    const handleUserJoined = (_userId: number, partyId: number) => {
+      if (partyId === Number(id)) {
+        queryClient.invalidateQueries({ queryKey: ['party', id] });
+
+      }
+    };
+
+    const handleUserLeft = (_userId: number, partyId: number) => {
+      if (partyId === Number(id)) {
+        queryClient.invalidateQueries({ queryKey: ['party', id] });
+
+      }
+    };
+
+    const handleSongAdded = (_songId: number, _connectionId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
+    };
+
+    const handleSongRemoved = (_songId: number, _connectionId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['party', id] });
+    };
+
+    const handlePartyDeleted = (partyId: number, hostUserId: number) => {
+      if (partyId === Number(id)) {
+        // Only show toast if current user is not the host (who deleted the party)
+        if (user?.id !== hostUserId) {
+          toast.info('Party has been deleted by the host');
+        }
+        navigate('/dashboard');
+      }
+    };
+
+    // Set up event listeners first
+    signalRService.onUserJoinedParty(handleUserJoined);
+    signalRService.onUserLeftParty(handleUserLeft);
+    signalRService.onSongAdded(handleSongAdded);
+    signalRService.onSongRemoved(handleSongRemoved);
+    signalRService.onPartyDeleted(handlePartyDeleted);
+
+
+    const joinWithRetry = async () => {
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (attempts < maxAttempts) {
+        try {
+          if (signalRService.isConnected) {
+            await signalRService.joinParty(Number(id));
+            console.log(`Successfully joined party ${id} (attempt ${attempts + 1})`);
+            break;
+          } else {
+            console.log(`SignalR not ready, waiting... (attempt ${attempts + 1})`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        } catch (error) {
+          console.error(`Failed to join party ${id} (attempt ${attempts + 1}):`, error);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        attempts++;
+      }
+      
+      if (attempts === maxAttempts) {
+        console.error(`Failed to join party ${id} after ${maxAttempts} attempts`);
+      }
+    };
+
+    joinWithRetry();
+
+    setListenersSetUp(id);
+    return () => {
+      // Leave SignalR party group when leaving the page
+      if (id) {
+        signalRService.leaveParty(Number(id));
+      }
+      signalRService.off('UserJoinedParty');
+      signalRService.off('UserLeftParty');
+      signalRService.off('SongAdded');
+      signalRService.off('SongRemoved');
+      signalRService.off('PartyDeleted');
+      
+      setListenersSetUp(null);
+    };
+  }, [isConnected, id]);
 
   const joinPartyMutation = useMutation({
     mutationFn: () => partyService.join(Number(id)),

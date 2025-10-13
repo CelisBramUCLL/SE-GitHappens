@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
+import { useGlobalPartyEvents } from '../hooks/useGlobalPartyEvents';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,11 +11,16 @@ import { Plus, Music, Users, Calendar } from 'lucide-react';
 export const PartiesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  
+
+  useGlobalPartyEvents('Parties');
 
   const { data: parties, isLoading, error } = useQuery({
     queryKey: ['parties'],
     queryFn: () => partyService.getAll(),
   });
+
+
 
   const joinPartyMutation = useMutation({
     mutationFn: (partyId: number) => partyService.join(partyId),
@@ -39,7 +45,7 @@ export const PartiesPage: React.FC = () => {
     }
   };
 
-  // Helper function to check if current user is already in the party
+
   const isUserInParty = (party: any) => {
     if (!user || !party.participants) return false;
     return party.participants.some((participant: any) => 
@@ -47,7 +53,7 @@ export const PartiesPage: React.FC = () => {
     );
   };
 
-  // Helper function to check if current user is the host
+
   const isUserHost = (party: any) => {
     if (!user || !party.hostUser) return false;
     return party.hostUser.username === user.username;

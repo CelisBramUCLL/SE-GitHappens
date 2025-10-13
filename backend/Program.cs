@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Dotnet_test.Hubs;
 using Dotnet_test.Infrastructure;
 using Dotnet_test.Interfaces;
 using Dotnet_test.Repository;
@@ -9,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure services
 builder
     .Services.AddControllers()
     .AddJsonOptions(options =>
@@ -26,13 +27,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// Allow cross origin requests
+// CORS configuration
 builder.Services.AddCors(p =>
     p.AddPolicy(
         "defaultPolicy",
         builder =>
         {
-            _ = builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+            _ = builder
+                .WithOrigins(
+                    "http://localhost:5173", // Vite dev server
+                    "https://localhost:5173", // Vite dev server HTTPS
+                    "http://localhost:3000", // Alternative dev server
+                    "https://localhost:3000" // Alternative dev server HTTPS
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
         }
     )
 );
@@ -42,7 +52,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPartyRepository, PartyRepository>();
 builder.Services.AddScoped<ISongRepository, SongRepository>();
 
-// Add JWT Authentication
+builder.Services.AddSignalR();
+
+// JWT Authentication
 builder
     .Services.AddAuthentication(options =>
     {
@@ -74,11 +86,18 @@ if (app.Environment.IsDevelopment())
     app.UseCors("defaultPolicy");
 }
 
-app.UseHttpsRedirection();
+// HTTPS redirection for production only
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Enable authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
+
+
+app.MapHub<PartyHub>("/partyHub");
 
 app.MapControllers();
 

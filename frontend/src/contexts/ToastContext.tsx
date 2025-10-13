@@ -49,7 +49,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto remove after duration (default 5 seconds)
+
     const duration = toast.duration || 5000;
     setTimeout(() => {
       removeToast(id);

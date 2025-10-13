@@ -59,10 +59,9 @@ export class PartyService extends BaseService {
 
   // Leave a party you're currently participating in
   async leave(partyId: number) {
-    const response = await fetch(this.buildUrl('/party/leave'), {
+    const response = await fetch(this.buildUrl(`/party/leave/${partyId}`), {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ partyId }),
     });
     return this.handleResponse(response);
   }
