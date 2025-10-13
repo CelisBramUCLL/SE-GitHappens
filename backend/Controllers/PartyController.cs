@@ -63,6 +63,10 @@ namespace Dotnet_test.Controllers
             try
             {
                 var partyDto = await _partyRepository.Create(party);
+
+                // Send SignalR notification to all users about the new party
+                await _hubContext.Clients.All.SendAsync("PartyCreated", partyDto);
+
                 return CreatedAtAction(nameof(GetById), new { id = partyDto.Id }, partyDto);
             }
             catch (Exception ex)
@@ -86,9 +90,31 @@ namespace Dotnet_test.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            // Get logged-in user ID from JWT token (the host)
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("User ID not found in token");
+
+            int hostUserId = int.Parse(userIdClaim.Value);
+
+            // First check if the party exists
+            var party = await _partyRepository.GetById(id);
+            if (party == null)
+                return NotFound(new { error = $"Party with id {id} not found" });
+
+            // Send SignalR notification to all users in the party before deletion
+            // Include the host's user ID so frontend can decide whether to show the toast
+            await _hubContext
+                .Clients.Group($"Party_{id}")
+                .SendAsync("PartyDeleted", id, hostUserId);
+
+            // Send SignalR notification to all users for dashboard updates
+            await _hubContext.Clients.All.SendAsync("PartyDeletedGlobal", id);
+
             var deleted = await _partyRepository.Delete(id);
             if (!deleted)
                 return NotFound(new { error = $"Party with id {id} not found" });
+
             return Ok(new { message = $"Party with id {id} deleted successfully", success = true });
         }
 

@@ -125,6 +125,18 @@ class SignalRService {
     this.connection?.on('SongRemoved', callback);
   }
 
+  onPartyDeleted(callback: (partyId: number, hostUserId: number) => void): void {
+    this.connection?.on('PartyDeleted', callback);
+  }
+
+  onPartyCreated(callback: (party: any) => void): void {
+    this.connection?.on('PartyCreated', callback);
+  }
+
+  onPartyDeletedGlobal(callback: (partyId: number) => void): void {
+    this.connection?.on('PartyDeletedGlobal', callback);
+  }
+
   // Remove event listeners
   off(eventName: string): void {
     this.connection?.off(eventName);

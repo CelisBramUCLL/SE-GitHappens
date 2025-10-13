@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { partyService } from '../services/party.service';
+import { useGlobalPartyEvents } from '../hooks/useGlobalPartyEvents';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,11 +11,19 @@ import { Plus, Music, Users, Calendar } from 'lucide-react';
 export const PartiesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  
+  // Set up global SignalR event listeners for party updates
+  useGlobalPartyEvents('Parties');
 
   const { data: parties, isLoading, error } = useQuery({
     queryKey: ['parties'],
     queryFn: () => partyService.getAll(),
   });
+
+  // Debug: Log when parties data changes
+  useEffect(() => {
+    console.log('🔍 [Parties] Parties data changed:', parties);
+  }, [parties]);
 
   const joinPartyMutation = useMutation({
     mutationFn: (partyId: number) => partyService.join(partyId),

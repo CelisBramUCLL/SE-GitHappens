@@ -75,11 +75,22 @@ export const PartyDetailPage: React.FC = () => {
       // Real-time update - no toast needed
     };
 
+    const handlePartyDeleted = (partyId: number, hostUserId: number) => {
+      if (partyId === Number(id)) {
+        // Only show toast if current user is not the host (who deleted the party)
+        if (user?.id !== hostUserId) {
+          toast.info('Party has been deleted by the host');
+        }
+        navigate('/dashboard'); // Redirect to dashboard for everyone
+      }
+    };
+
     // Set up event listeners first
     signalRService.onUserJoinedParty(handleUserJoined);
     signalRService.onUserLeftParty(handleUserLeft);
     signalRService.onSongAdded(handleSongAdded);
     signalRService.onSongRemoved(handleSongRemoved);
+    signalRService.onPartyDeleted(handlePartyDeleted);
 
     // Auto-join the SignalR party group with retry logic
     const joinWithRetry = async () => {
@@ -126,6 +137,7 @@ export const PartyDetailPage: React.FC = () => {
       signalRService.off('UserLeftParty');
       signalRService.off('SongAdded');
       signalRService.off('SongRemoved');
+      signalRService.off('PartyDeleted');
       
       // Reset listeners setup tracking
       setListenersSetUp(null);
