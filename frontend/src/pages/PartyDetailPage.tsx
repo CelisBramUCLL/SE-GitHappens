@@ -1,25 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { partyService } from '../services/party.service';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import { useSignalR } from '../hooks/useSignalR';
-import { signalRService } from '../services/signalRService';
-import { Layout } from '../components/Layout';
-import { Button } from '../components/ui/button';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { 
-  ArrowLeft, 
-  Users, 
-  Music, 
-  Plus, 
-  Trash2, 
-  Play, 
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { partyService } from "../services/party.service";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
+import { useSignalR } from "../hooks/useSignalR";
+import { signalRService } from "../services/signalRService";
+import { Button } from "../components/ui/button";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import {
+  ArrowLeft,
+  Users,
+  Music,
+  Plus,
+  Trash2,
+  Play,
   Clock,
   UserPlus,
-  UserMinus 
-} from 'lucide-react';
+  UserMinus,
+} from "lucide-react";
 
 export const PartyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,55 +27,54 @@ export const PartyDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showStopConfirm, setShowStopConfirm] = useState(false);
-  
+
   const { isConnected } = useSignalR();
   const [listenersSetUp, setListenersSetUp] = useState<string | null>(null);
 
-  const { data: party, isLoading, error } = useQuery({
-    queryKey: ['party', id],
+  const {
+    data: party,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["party", id],
     queryFn: () => partyService.getById(Number(id)),
     enabled: !!id,
   });
 
   const partyData = party as any;
 
-
   useEffect(() => {
     if (!isConnected || !id) return;
-    
 
     if (listenersSetUp === id) return;
 
-
     const handleUserJoined = (_userId: number, partyId: number) => {
       if (partyId === Number(id)) {
-        queryClient.invalidateQueries({ queryKey: ['party', id] });
-
+        queryClient.invalidateQueries({ queryKey: ["party", id] });
       }
     };
 
     const handleUserLeft = (_userId: number, partyId: number) => {
       if (partyId === Number(id)) {
-        queryClient.invalidateQueries({ queryKey: ['party', id] });
-
+        queryClient.invalidateQueries({ queryKey: ["party", id] });
       }
     };
 
     const handleSongAdded = (_songId: number, _connectionId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['party', id] });
+      queryClient.invalidateQueries({ queryKey: ["party", id] });
     };
 
     const handleSongRemoved = (_songId: number, _connectionId: string) => {
-      queryClient.invalidateQueries({ queryKey: ['party', id] });
+      queryClient.invalidateQueries({ queryKey: ["party", id] });
     };
 
     const handlePartyDeleted = (partyId: number, hostUserId: number) => {
       if (partyId === Number(id)) {
         // Only show toast if current user is not the host (who deleted the party)
         if (user?.id !== hostUserId) {
-          toast.info('Party has been deleted by the host');
+          toast.info("Party has been deleted by the host");
         }
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     };
 
@@ -87,30 +85,38 @@ export const PartyDetailPage: React.FC = () => {
     signalRService.onSongRemoved(handleSongRemoved);
     signalRService.onPartyDeleted(handlePartyDeleted);
 
-
     const joinWithRetry = async () => {
       let attempts = 0;
       const maxAttempts = 5;
-      
+
       while (attempts < maxAttempts) {
         try {
           if (signalRService.isConnected) {
             await signalRService.joinParty(Number(id));
-            console.log(`Successfully joined party ${id} (attempt ${attempts + 1})`);
+            console.log(
+              `Successfully joined party ${id} (attempt ${attempts + 1})`
+            );
             break;
           } else {
-            console.log(`SignalR not ready, waiting... (attempt ${attempts + 1})`);
-            await new Promise(resolve => setTimeout(resolve, 200));
+            console.log(
+              `SignalR not ready, waiting... (attempt ${attempts + 1})`
+            );
+            await new Promise((resolve) => setTimeout(resolve, 200));
           }
         } catch (error) {
-          console.error(`Failed to join party ${id} (attempt ${attempts + 1}):`, error);
-          await new Promise(resolve => setTimeout(resolve, 200));
+          console.error(
+            `Failed to join party ${id} (attempt ${attempts + 1}):`,
+            error
+          );
+          await new Promise((resolve) => setTimeout(resolve, 200));
         }
         attempts++;
       }
-      
+
       if (attempts === maxAttempts) {
-        console.error(`Failed to join party ${id} after ${maxAttempts} attempts`);
+        console.error(
+          `Failed to join party ${id} after ${maxAttempts} attempts`
+        );
       }
     };
 
@@ -122,12 +128,12 @@ export const PartyDetailPage: React.FC = () => {
       if (id) {
         signalRService.leaveParty(Number(id));
       }
-      signalRService.off('UserJoinedParty');
-      signalRService.off('UserLeftParty');
-      signalRService.off('SongAdded');
-      signalRService.off('SongRemoved');
-      signalRService.off('PartyDeleted');
-      
+      signalRService.off("UserJoinedParty");
+      signalRService.off("UserLeftParty");
+      signalRService.off("SongAdded");
+      signalRService.off("SongRemoved");
+      signalRService.off("PartyDeleted");
+
       setListenersSetUp(null);
     };
   }, [isConnected, id]);
@@ -135,44 +141,44 @@ export const PartyDetailPage: React.FC = () => {
   const joinPartyMutation = useMutation({
     mutationFn: () => partyService.join(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['party', id] });
-      toast.success('Successfully joined the party!');
+      queryClient.invalidateQueries({ queryKey: ["party", id] });
+      toast.success("Successfully joined the party!");
     },
     onError: () => {
-      toast.error('Failed to join party. Please try again.');
+      toast.error("Failed to join party. Please try again.");
     },
   });
 
   const leavePartyMutation = useMutation({
     mutationFn: () => partyService.leave(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['party', id] });
-      toast.success('Successfully left the party.');
+      queryClient.invalidateQueries({ queryKey: ["party", id] });
+      toast.success("Successfully left the party.");
     },
     onError: () => {
-      toast.error('Failed to leave party. Please try again.');
+      toast.error("Failed to leave party. Please try again.");
     },
   });
 
   const removeSongMutation = useMutation({
     mutationFn: (songId: number) => partyService.removeSong(songId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['party', id] });
-      toast.success('Song removed from playlist.');
+      queryClient.invalidateQueries({ queryKey: ["party", id] });
+      toast.success("Song removed from playlist.");
     },
     onError: () => {
-      toast.error('Failed to remove song. Please try again.');
+      toast.error("Failed to remove song. Please try again.");
     },
   });
 
   const deletePartyMutation = useMutation({
     mutationFn: () => partyService.delete(Number(id)),
     onSuccess: () => {
-      toast.success('Party stopped successfully.');
-      navigate('/parties');
+      toast.success("Party stopped successfully.");
+      navigate("/parties");
     },
     onError: () => {
-      toast.error('Failed to stop party. Please try again.');
+      toast.error("Failed to stop party. Please try again.");
     },
   });
 
@@ -197,75 +203,82 @@ export const PartyDetailPage: React.FC = () => {
   };
 
   const handleAddSongsNavigation = () => {
-    navigate('/songs');
+    navigate("/songs");
   };
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </Layout>
+      <div className="flex justify-center items-center h-64">
+        <div className="border-blue-600 border-b-2 rounded-full w-32 h-32 animate-spin"></div>
+      </div>
     );
   }
 
   if (error || !partyData) {
     return (
-      <Layout>
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">
-            Error loading party: {error instanceof Error ? error.message : 'Party not found'}
-          </div>
+      <div className="bg-red-50 p-4 rounded-md">
+        <div className="text-red-700 text-sm">
+          Error loading party:{" "}
+          {error instanceof Error ? error.message : "Party not found"}
         </div>
-      </Layout>
+      </div>
     );
   }
 
   const isHost = partyData?.hostUser?.id === user?.id;
-  const isParticipant = isHost || partyData?.participants?.some((p: any) => p.userName === user?.username);
+  const isParticipant =
+    isHost ||
+    partyData?.participants?.some((p: any) => p.userName === user?.username);
 
   return (
-    <Layout>
+    <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigate('/parties')}
-              className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+              onClick={() => navigate("/parties")}
+              className="flex items-center text-gray-500 hover:text-gray-700 text-sm"
             >
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="mr-1 w-4 h-4" />
               Back to Parties
             </button>
           </div>
         </div>
 
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
+          <div className="px-6 py-4 border-gray-200 border-b">
+            <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{partyData.name}</h1>
+                <h1 className="font-bold text-gray-900 text-2xl">
+                  {partyData.name}
+                </h1>
                 <p className="text-gray-600">
                   Hosted by {partyData.hostUser?.username}
                   {isHost && <span className="ml-2 text-blue-600">(You)</span>}
                 </p>
               </div>
               <div className="flex items-center space-x-3">
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                  partyData.status === 'Active' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                  className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                    partyData.status === "Active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
                   {partyData.status}
                 </span>
-                {partyData.status === 'Active' && !isParticipant && (
+                {partyData.status === "Active" && !isParticipant && (
                   <Button
                     onClick={handleJoinParty}
                     disabled={joinPartyMutation.isPending}
                     className="flex items-center space-x-2"
                   >
-                    <UserPlus className="h-4 w-4" />
-                    <span>{joinPartyMutation.isPending ? 'Joining...' : 'Join Party'}</span>
+                    <UserPlus className="w-4 h-4" />
+                    <span>
+                      {joinPartyMutation.isPending
+                        ? "Joining..."
+                        : "Join Party"}
+                    </span>
                   </Button>
                 )}
                 {isParticipant && !isHost && (
@@ -275,19 +288,27 @@ export const PartyDetailPage: React.FC = () => {
                     disabled={leavePartyMutation.isPending}
                     className="flex items-center space-x-2"
                   >
-                    <UserMinus className="h-4 w-4" />
-                    <span>{leavePartyMutation.isPending ? 'Leaving...' : 'Leave Party'}</span>
+                    <UserMinus className="w-4 h-4" />
+                    <span>
+                      {leavePartyMutation.isPending
+                        ? "Leaving..."
+                        : "Leave Party"}
+                    </span>
                   </Button>
                 )}
-                {isHost && partyData.status === 'Active' && (
+                {isHost && partyData.status === "Active" && (
                   <Button
                     variant="destructive"
                     onClick={handleStopParty}
                     disabled={deletePartyMutation.isPending}
                     className="flex items-center space-x-2"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    <span>{deletePartyMutation.isPending ? 'Stopping...' : 'Stop Party'}</span>
+                    <Trash2 className="w-4 h-4" />
+                    <span>
+                      {deletePartyMutation.isPending
+                        ? "Stopping..."
+                        : "Stop Party"}
+                    </span>
                   </Button>
                 )}
               </div>
@@ -295,11 +316,11 @@ export const PartyDetailPage: React.FC = () => {
           </div>
 
           <div className="px-6 py-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="gap-6 grid grid-cols-1 lg:grid-cols-3">
               <div className="lg:col-span-2">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                    <Music className="h-5 w-5 mr-2" />
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="flex items-center font-medium text-gray-900 text-lg">
+                    <Music className="mr-2 w-5 h-5" />
                     Playlist
                   </h3>
                   {(isHost || isParticipant) && (
@@ -308,28 +329,38 @@ export const PartyDetailPage: React.FC = () => {
                       size="sm"
                       className="flex items-center space-x-2"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="w-4 h-4" />
                       <span>Browse & Add Songs</span>
                     </Button>
                   )}
                 </div>
 
                 <div className="space-y-3">
-                  {partyData.playlist?.songs && partyData.playlist.songs.length > 0 ? (
+                  {partyData.playlist?.songs &&
+                  partyData.playlist.songs.length > 0 ? (
                     partyData.playlist.songs.map((song: any, index: number) => (
-                      <div key={song.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div
+                        key={song.id}
+                        className="flex justify-between items-center bg-gray-50 p-4 rounded-lg"
+                      >
                         <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">{index + 1}</span>
+                          <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-8 h-8">
+                            <span className="font-medium text-blue-600 text-sm">
+                              {index + 1}
+                            </span>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-gray-900">{song.title}</h4>
-                            <p className="text-sm text-gray-500">{song.artist} • {song.album}</p>
+                            <h4 className="font-medium text-gray-900 text-sm">
+                              {song.title}
+                            </h4>
+                            <p className="text-gray-500 text-sm">
+                              {song.artist} • {song.album}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Button size="sm" variant="outline">
-                            <Play className="h-4 w-4" />
+                            <Play className="w-4 h-4" />
                           </Button>
                           {(isHost || isParticipant) && (
                             <Button
@@ -338,17 +369,19 @@ export const PartyDetailPage: React.FC = () => {
                               onClick={() => handleRemoveSong(song.id)}
                               disabled={removeSongMutation.isPending}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           )}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <Music className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-sm font-medium text-gray-900">No songs yet</h3>
-                      <p className="mt-1 text-sm text-gray-500">
+                    <div className="py-8 text-gray-500 text-center">
+                      <Music className="mx-auto w-12 h-12 text-gray-400" />
+                      <h3 className="mt-2 font-medium text-gray-900 text-sm">
+                        No songs yet
+                      </h3>
+                      <p className="mt-1 text-gray-500 text-sm">
                         Add the first song to get the party started!
                       </p>
                     </div>
@@ -357,44 +390,59 @@ export const PartyDetailPage: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="text-lg font-medium text-gray-900 flex items-center mb-4">
-                  <Users className="h-5 w-5 mr-2" />
+                <h3 className="flex items-center mb-4 font-medium text-gray-900 text-lg">
+                  <Users className="mr-2 w-5 h-5" />
                   Participants ({partyData.participants?.length || 0})
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">H</span>
+                  <div className="flex items-center space-x-3 bg-blue-50 p-3 rounded-lg">
+                    <div className="flex flex-shrink-0 justify-center items-center bg-blue-100 rounded-full w-8 h-8">
+                      <span className="font-medium text-blue-600 text-sm">
+                        H
+                      </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="font-medium text-gray-900 text-sm">
                         {partyData.hostUser?.username}
-                        {isHost && <span className="ml-1 text-blue-600">(You)</span>}
+                        {isHost && (
+                          <span className="ml-1 text-blue-600">(You)</span>
+                        )}
                       </p>
-                      <p className="text-xs text-gray-500">Host</p>
+                      <p className="text-gray-500 text-xs">Host</p>
                     </div>
                   </div>
-                  {partyData.participants?.filter((participant: any) => 
-                    participant.userName !== partyData.hostUser?.username
-                  ).map((participant: any) => (
-                    <div key={participant.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
-                          {participant.userName.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {participant.userName}
-                          {participant.userName === user?.username && <span className="ml-1 text-blue-600">(You)</span>}
-                        </p>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Joined {new Date(participant.joinedAt).toLocaleTimeString()}
+                  {partyData.participants
+                    ?.filter(
+                      (participant: any) =>
+                        participant.userName !== partyData.hostUser?.username
+                    )
+                    .map((participant: any) => (
+                      <div
+                        key={participant.id}
+                        className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg"
+                      >
+                        <div className="flex flex-shrink-0 justify-center items-center bg-gray-100 rounded-full w-8 h-8">
+                          <span className="font-medium text-gray-600 text-sm">
+                            {participant.userName.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">
+                            {participant.userName}
+                            {participant.userName === user?.username && (
+                              <span className="ml-1 text-blue-600">(You)</span>
+                            )}
+                          </p>
+                          <div className="flex items-center text-gray-500 text-xs">
+                            <Clock className="mr-1 w-3 h-3" />
+                            Joined{" "}
+                            {new Date(
+                              participant.joinedAt
+                            ).toLocaleTimeString()}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>
@@ -410,6 +458,6 @@ export const PartyDetailPage: React.FC = () => {
         message="Are you sure you want to stop this party? This action cannot be undone."
         confirmText="Stop Party"
       />
-    </Layout>
+    </>
   );
 };
