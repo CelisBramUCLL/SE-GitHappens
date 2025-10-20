@@ -126,12 +126,7 @@ namespace Dotnet_test.Repository
             // Generate JWT token
             var token = GenerateJwtToken(user);
 
-            return new LoginResponseDTO
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Token = token,
-            };
+            return new LoginResponseDTO(user.Id, user.Username, token);
         }
 
         // JWT token generation method

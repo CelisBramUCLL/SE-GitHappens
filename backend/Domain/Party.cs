@@ -1,11 +1,5 @@
 namespace Dotnet_test.Domain
 {
-    public enum Status
-    {
-        Active,
-        Ended,
-    }
-
     public class Party
     {
         public int Id { get; set; }

@@ -3,6 +3,7 @@ using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Party;
 using Dotnet_test.DTOs.Song;
+using Dotnet_test.Extensions;
 using Dotnet_test.Hubs;
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -42,19 +43,17 @@ namespace Dotnet_test.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePartyDto dto)
+        public async Task<IActionResult> CreateParty([FromBody] CreatePartyDTO dto)
         {
             // Get logged-in user ID from JWT token
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+            int? userId = User.GetUserId();
+            if (!userId.HasValue)
                 return Unauthorized("User ID not found in token");
-
-            int userId = int.Parse(userIdClaim.Value);
 
             var party = new Party
             {
                 Name = dto.Name,
-                HostUserId = userId,
+                HostUserId = userId.Value,
                 Status = Status.Active,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -91,11 +90,7 @@ namespace Dotnet_test.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             // Get logged-in user ID from JWT token (the host)
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                return Unauthorized("User ID not found in token");
-
-            int hostUserId = int.Parse(userIdClaim.Value);
+            int? userId = User.GetUserId();
 
             // First check if the party exists
             var party = await _partyRepository.GetById(id);
@@ -105,7 +100,7 @@ namespace Dotnet_test.Controllers
             // Notify party members
             await _hubContext
                 .Clients.Group($"Party_{id}")
-                .SendAsync("PartyDeleted", id, hostUserId);
+                .SendAsync("PartyDeleted", id, party.HostUser.Id);
 
             // Notify all users for dashboard updates
             await _hubContext.Clients.All.SendAsync("PartyDeletedGlobal", id);
@@ -124,13 +119,11 @@ namespace Dotnet_test.Controllers
             try
             {
                 // Get logged-in user ID from JWT token
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                int? loggedInUserId = User.GetUserId();
+                if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                int loggedInUserId = int.Parse(userIdClaim.Value);
-
-                var participant = await _partyRepository.JoinParty(dto, loggedInUserId);
+                var participant = await _partyRepository.JoinParty(dto, loggedInUserId.Value);
 
                 // Notify party members of new participant
                 await _hubContext
@@ -152,13 +145,11 @@ namespace Dotnet_test.Controllers
             try
             {
                 // Get logged-in user ID from JWT token
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                int? loggedInUserId = User.GetUserId();
+                if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                int loggedInUserId = int.Parse(userIdClaim.Value);
-
-                var participant = await _partyRepository.LeaveParty(id, loggedInUserId);
+                var participant = await _partyRepository.LeaveParty(id, loggedInUserId.Value);
                 if (participant == null)
                     return NotFound("Participant not found or user not in this party");
 
@@ -182,19 +173,17 @@ namespace Dotnet_test.Controllers
             try
             {
                 // Get logged-in user ID from JWT token
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                int? loggedInUserId = User.GetUserId();
+                if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                int loggedInUserId = int.Parse(userIdClaim.Value);
-
                 // Get current party for notifications
-                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
+                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId.Value);
                 if (currentParty == null)
                     return BadRequest("User is not in any active party");
 
                 var playlistSong = await _partyRepository.AddSongToCurrentParty(
-                    loggedInUserId,
+                    loggedInUserId.Value,
                     dto
                 );
 
@@ -218,19 +207,17 @@ namespace Dotnet_test.Controllers
             try
             {
                 // Get logged-in user ID from JWT token
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                int? loggedInUserId = User.GetUserId();
+                if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                int loggedInUserId = int.Parse(userIdClaim.Value);
-
                 // Get current party for notifications
-                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
+                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId.Value);
                 if (currentParty == null)
                     return BadRequest("User is not in any active party");
 
                 var playlistSong = await _partyRepository.RemoveSongFromCurrentParty(
-                    loggedInUserId,
+                    loggedInUserId.Value,
                     dto
                 );
 
@@ -254,16 +241,14 @@ namespace Dotnet_test.Controllers
             try
             {
                 // Get logged-in user ID from JWT token
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                int? loggedInUserId = User.GetUserId();
+                if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                int loggedInUserId = int.Parse(userIdClaim.Value);
-
-                var activeParty = await _partyRepository.GetUserActiveParty(loggedInUserId);
+                var activeParty = await _partyRepository.GetUserActiveParty(loggedInUserId.Value);
 
                 if (activeParty == null)
-                    return Ok(new { hasActiveParty = false, party = (object)null });
+                    return Ok(new { hasActiveParty = false, party = (object?)null });
 
                 return Ok(new { hasActiveParty = true, party = activeParty });
             }
@@ -272,7 +257,5 @@ namespace Dotnet_test.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-        // These will be implemented as we continue the conversion
     }
 }
