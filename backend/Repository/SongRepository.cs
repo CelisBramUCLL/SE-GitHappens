@@ -37,9 +37,10 @@ namespace Dotnet_test.Repository
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            // Get paginated results
+            // Get paginated results - ordered by Title, then Artist (matches IComparable implementation)
             var songs = await query
                 .OrderBy(s => s.Title)
+                .ThenBy(s => s.Artist)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(s => new SongDTO
@@ -87,6 +88,7 @@ namespace Dotnet_test.Repository
                     || s.Album.ToLower().Contains(query)
                 )
                 .OrderBy(s => s.Title)
+                .ThenBy(s => s.Artist)
                 .Take(limit)
                 .Select(s => new SongDTO
                 {
