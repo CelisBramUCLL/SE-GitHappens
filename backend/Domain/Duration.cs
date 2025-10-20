@@ -50,27 +50,6 @@ namespace Dotnet_test.Domain
             throw new FormatException("Duration must be in format 'mm:ss'");
         }
 
-        // Method with optional parameters demonstrating named and optional argument usage
-        public static Duration Create(int minutes = 0, int seconds = 0, bool normalize = true)
-        {
-            if (normalize && seconds >= 60)
-            {
-                return new Duration(minutes + (seconds / 60), seconds % 60);
-            }
-            return new Duration(minutes, seconds);
-        }
-
-        // Method demonstrating optional parameters with different types
-        public string Format(
-            bool includeSeconds = true,
-            string separator = ":",
-            bool padMinutes = false
-        )
-        {
-            var minutesStr = padMinutes ? Minutes.ToString("D2") : Minutes.ToString();
-            return includeSeconds ? $"{minutesStr}{separator}{Seconds:D2}" : minutesStr;
-        }
-
         // Operators
         public static bool operator ==(Duration left, Duration right) =>
             left.Minutes == right.Minutes && left.Seconds == right.Seconds;
