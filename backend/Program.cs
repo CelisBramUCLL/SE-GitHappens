@@ -4,6 +4,7 @@ using Dotnet_test.Hubs;
 using Dotnet_test.Infrastructure;
 using Dotnet_test.Interfaces;
 using Dotnet_test.Repository;
+using Dotnet_test.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -54,6 +55,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPartyRepository, PartyRepository>();
 builder.Services.AddScoped<ISongRepository, SongRepository>();
 
+// Register services
+builder.Services.AddScoped<DataSeedingService>();
+
 builder.Services.AddSignalR();
 
 // JWT Authentication
@@ -80,6 +84,24 @@ builder
     });
 
 var app = builder.Build();
+
+// Seed database on startup
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dataSeedingService = scope.ServiceProvider.GetRequiredService<DataSeedingService>();
+    var csvPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "songs.csv");
+
+    try
+    {
+        await dataSeedingService.SeedSongsFromCsvAsync(csvPath);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Error occurred while seeding database from CSV");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
