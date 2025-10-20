@@ -1,4 +1,6 @@
-﻿namespace Dotnet_test.DTOs.Playlist
+﻿using Dotnet_test.Domain;
+
+namespace Dotnet_test.DTOs.Playlist
 {
     public class PlaylistSongDTO
     {
@@ -7,7 +9,7 @@
         public string Title { get; set; } = string.Empty;
         public string Artist { get; set; } = string.Empty;
         public string Album { get; set; } = string.Empty;
-        public TimeSpan Duration { get; set; }
+        public Duration Duration { get; set; }
         public string FilePath { get; set; } = string.Empty;
 
         public int AddedByUserId { get; set; }

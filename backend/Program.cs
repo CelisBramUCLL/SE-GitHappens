@@ -17,6 +17,8 @@ builder
     {
         // serialize enums as strings in API responses
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // serialize Duration struct as string
+        options.JsonSerializerOptions.Converters.Add(new DurationJsonConverter());
     });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -95,7 +97,6 @@ if (!app.Environment.IsDevelopment())
 // Enable authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapHub<PartyHub>("/partyHub");
 

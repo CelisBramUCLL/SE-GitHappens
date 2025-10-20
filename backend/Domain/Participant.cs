@@ -1,11 +1,5 @@
 ﻿namespace Dotnet_test.Domain
 {
-    public enum ParticipantRole
-    {
-        Host,
-        Member,
-    }
-
     public class Participant
     {
         public int Id { get; set; }

@@ -73,7 +73,7 @@ namespace Dotnet_test.Repository
                 Status = party.Status,
                 CreatedAt = party.CreatedAt,
                 UpdatedAt = party.UpdatedAt,
-                HostUser = new HostUserDTO { Id = hostUser.Id, Username = hostUser.Username },
+                HostUser = new HostUserDTO(hostUser.Id, hostUser.Username),
                 Participants = new List<ParticipantInPartyDTO>
                 {
                     new ParticipantInPartyDTO
@@ -122,11 +122,7 @@ namespace Dotnet_test.Repository
                     Status = s.Status,
                     CreatedAt = s.CreatedAt,
                     UpdatedAt = s.UpdatedAt,
-                    HostUser = new HostUserDTO
-                    {
-                        Id = s.HostUser.Id,
-                        Username = s.HostUser.Username,
-                    },
+                    HostUser = new HostUserDTO(s.HostUser.Id, s.HostUser.Username),
                     Participants = s
                         .Participants.Select(p => new ParticipantInPartyDTO
                         {
@@ -149,11 +145,10 @@ namespace Dotnet_test.Repository
                                 Album = ps.Song.Album,
                                 Duration = ps.Song.Duration,
                                 FilePath = ps.Song.FilePath,
-                                AddedBy = new HostUserDTO
-                                {
-                                    Id = ps.AddedByUser.Id,
-                                    Username = ps.AddedByUser.Username,
-                                },
+                                AddedBy = new HostUserDTO(
+                                    ps.AddedByUser.Id,
+                                    ps.AddedByUser.Username
+                                ),
                             })
                             .ToList(),
                     },
@@ -185,11 +180,7 @@ namespace Dotnet_test.Repository
                 Status = party.Status,
                 CreatedAt = party.CreatedAt,
                 UpdatedAt = party.UpdatedAt,
-                HostUser = new HostUserDTO
-                {
-                    Id = party.HostUser.Id,
-                    Username = party.HostUser.Username,
-                },
+                HostUser = new HostUserDTO(party.HostUser.Id, party.HostUser.Username),
                 Participants = party
                     .Participants.Select(p => new ParticipantInPartyDTO
                     {
@@ -214,11 +205,10 @@ namespace Dotnet_test.Repository
                                     Album = ps.Song.Album,
                                     Duration = ps.Song.Duration,
                                     FilePath = ps.Song.FilePath,
-                                    AddedBy = new HostUserDTO
-                                    {
-                                        Id = ps.AddedByUser.Id,
-                                        Username = ps.AddedByUser.Username,
-                                    },
+                                    AddedBy = new HostUserDTO(
+                                        ps.AddedByUser.Id,
+                                        ps.AddedByUser.Username
+                                    ),
                                 })
                                 .ToList(),
                         }
@@ -266,11 +256,7 @@ namespace Dotnet_test.Repository
                 Status = partyInDb.Status,
                 CreatedAt = partyInDb.CreatedAt,
                 UpdatedAt = partyInDb.UpdatedAt,
-                HostUser = new HostUserDTO
-                {
-                    Id = partyInDb.HostUser.Id,
-                    Username = partyInDb.HostUser.Username,
-                },
+                HostUser = new HostUserDTO(partyInDb.HostUser.Id, partyInDb.HostUser.Username),
                 Participants = partyInDb
                     .Participants.Select(p => new ParticipantInPartyDTO
                     {
@@ -346,7 +332,7 @@ namespace Dotnet_test.Repository
                 PartyId = participant.PartyId,
                 UserId = participant.UserId,
                 JoinedAt = participant.JoinedAt,
-                User = new HostUserDTO { Id = user.Id, Username = user.Username },
+                User = new HostUserDTO(user.Id, user.Username),
             };
 
             return participantDto;
@@ -530,11 +516,7 @@ namespace Dotnet_test.Repository
                 Status = party.Status,
                 CreatedAt = party.CreatedAt,
                 UpdatedAt = party.UpdatedAt,
-                HostUser = new HostUserDTO
-                {
-                    Id = party.HostUser.Id,
-                    Username = party.HostUser.Username,
-                },
+                HostUser = new HostUserDTO(party.HostUser.Id, party.HostUser.Username),
                 Participants = party
                     .Participants.Select(p => new ParticipantInPartyDTO
                     {

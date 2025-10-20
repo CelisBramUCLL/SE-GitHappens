@@ -62,6 +62,15 @@ namespace Dotnet_test.Infrastructure
                 .WithMany(p => p.Songs)
                 .HasForeignKey(ps => ps.PlaylistId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure Duration struct value conversion
+            modelBuilder
+                .Entity<Song>()
+                .Property(s => s.Duration)
+                .HasConversion(
+                    duration => duration.TotalSeconds, // Convert Duration to int for database
+                    totalSeconds => Duration.FromSeconds(totalSeconds) // Convert int back to Duration
+                );
         }
     }
 }
