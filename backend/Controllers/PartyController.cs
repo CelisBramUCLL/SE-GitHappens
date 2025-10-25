@@ -1,14 +1,10 @@
-using System.Security.Claims;
-using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Party;
 using Dotnet_test.DTOs.Song;
 using Dotnet_test.Extensions;
-using Dotnet_test.Hubs;
-using Dotnet_test.Interfaces;
+using Dotnet_test.Interfaces; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Dotnet_test.Controllers
 {
@@ -16,26 +12,24 @@ namespace Dotnet_test.Controllers
     [ApiController]
     public class PartyController : ControllerBase
     {
-        private readonly IPartyRepository _partyRepository;
-        private readonly IHubContext<PartyHub> _hubContext;
+        private readonly IPartyService _partyService;
 
-        public PartyController(IPartyRepository partyRepository, IHubContext<PartyHub> hubContext)
+        public PartyController(IPartyService partyService)
         {
-            _partyRepository = partyRepository;
-            _hubContext = hubContext;
+            _partyService = partyService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var parties = await _partyRepository.GetAll();
+            var parties = await _partyService.GetAllAsync();
             return Ok(parties);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var party = await _partyRepository.GetById(id);
+            var party = await _partyService.GetByIdAsync(id); 
             if (party == null)
                 return NotFound();
             return Ok(party);
@@ -45,26 +39,13 @@ namespace Dotnet_test.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateParty([FromBody] CreatePartyDTO dto)
         {
-            // Get logged-in user ID from JWT token
             int? userId = User.GetUserId();
             if (!userId.HasValue)
                 return Unauthorized("User ID not found in token");
 
-            var party = new Party
-            {
-                Name = dto.Name,
-                HostUserId = userId.Value,
-                Status = Status.Active,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            };
-
             try
             {
-                var partyDto = await _partyRepository.Create(party);
-
-                // Notify all users of new party
-                await _hubContext.Clients.All.SendAsync("PartyCreated", partyDto);
+                var partyDto = await _partyService.CreatePartyAsync(dto, userId.Value);
 
                 return CreatedAtAction(nameof(GetById), new { id = partyDto.Id }, partyDto);
             }
@@ -78,8 +59,7 @@ namespace Dotnet_test.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdatePartyDTO dto)
         {
-            var party = new Party { Id = id };
-            var updated = await _partyRepository.Update(party, dto);
+            var updated = await _partyService.UpdatePartyAsync(id, dto);
             if (updated == null)
                 return NotFound();
             return Ok(updated);
@@ -89,23 +69,12 @@ namespace Dotnet_test.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            // Get logged-in user ID from JWT token (the host)
             int? userId = User.GetUserId();
-
-            // First check if the party exists
-            var party = await _partyRepository.GetById(id);
-            if (party == null)
-                return NotFound(new { error = $"Party with id {id} not found" });
-
-            // Notify party members
-            await _hubContext
-                .Clients.Group($"Party_{id}")
-                .SendAsync("PartyDeleted", id, party.HostUser.Id);
-
-            // Notify all users for dashboard updates
-            await _hubContext.Clients.All.SendAsync("PartyDeletedGlobal", id);
-
-            var deleted = await _partyRepository.Delete(id);
+            if (!userId.HasValue)
+                return Unauthorized("User ID not found in token");
+                
+            var deleted = await _partyService.DeletePartyAsync(id, userId.Value);
+            
             if (!deleted)
                 return NotFound(new { error = $"Party with id {id} not found" });
 
@@ -118,17 +87,11 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user ID from JWT token
                 int? loggedInUserId = User.GetUserId();
                 if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                var participant = await _partyRepository.JoinParty(dto, loggedInUserId.Value);
-
-                // Notify party members of new participant
-                await _hubContext
-                    .Clients.Group($"Party_{dto.PartyId}")
-                    .SendAsync("UserJoinedParty", loggedInUserId, dto.PartyId);
+                var participant = await _partyService.JoinPartyAsync(dto, loggedInUserId.Value);
 
                 return Ok(participant);
             }
@@ -144,19 +107,14 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user ID from JWT token
                 int? loggedInUserId = User.GetUserId();
                 if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                var participant = await _partyRepository.LeaveParty(id, loggedInUserId.Value);
+                var participant = await _partyService.LeavePartyAsync(id, loggedInUserId.Value);
+                
                 if (participant == null)
                     return NotFound("Participant not found or user not in this party");
-
-                // Notify party members of participant leaving
-                await _hubContext
-                    .Clients.Group($"Party_{id}")
-                    .SendAsync("UserLeftParty", loggedInUserId, id);
 
                 return Ok(participant);
             }
@@ -172,25 +130,11 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user ID from JWT token
                 int? loggedInUserId = User.GetUserId();
                 if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                // Get current party for notifications
-                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId.Value);
-                if (currentParty == null)
-                    return BadRequest("User is not in any active party");
-
-                var playlistSong = await _partyRepository.AddSongToCurrentParty(
-                    loggedInUserId.Value,
-                    dto
-                );
-
-                // Notify party members of song addition
-                await _hubContext
-                    .Clients.Group($"Party_{currentParty.Id}")
-                    .SendAsync("SongAdded", dto.SongId, "server");
+                var playlistSong = await _partyService.AddSongAsync(dto, loggedInUserId.Value);
 
                 return Ok(playlistSong);
             }
@@ -206,25 +150,11 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user ID from JWT token
                 int? loggedInUserId = User.GetUserId();
                 if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                // Get current party for notifications
-                var currentParty = await _partyRepository.GetUserActiveParty(loggedInUserId.Value);
-                if (currentParty == null)
-                    return BadRequest("User is not in any active party");
-
-                var playlistSong = await _partyRepository.RemoveSongFromCurrentParty(
-                    loggedInUserId.Value,
-                    dto
-                );
-
-                // Notify party members of song removal
-                await _hubContext
-                    .Clients.Group($"Party_{currentParty.Id}")
-                    .SendAsync("SongRemoved", dto.SongId, "server");
+                var playlistSong = await _partyService.RemoveSongAsync(dto, loggedInUserId.Value);
 
                 return Ok(playlistSong);
             }
@@ -240,12 +170,11 @@ namespace Dotnet_test.Controllers
         {
             try
             {
-                // Get logged-in user ID from JWT token
                 int? loggedInUserId = User.GetUserId();
                 if (!loggedInUserId.HasValue)
                     return Unauthorized("User ID not found in token");
 
-                var activeParty = await _partyRepository.GetUserActiveParty(loggedInUserId.Value);
+                var activeParty = await _partyService.GetMyActivePartyAsync(loggedInUserId.Value);
 
                 if (activeParty == null)
                     return Ok(new { hasActiveParty = false, party = (object?)null });

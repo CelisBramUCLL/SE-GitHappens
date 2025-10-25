@@ -58,6 +58,10 @@ builder.Services.AddScoped<ISongRepository, SongRepository>();
 // Register services
 builder.Services.AddScoped<DataSeedingService>();
 
+builder.Services.AddScoped<IPartyService, PartyService>(); 
+builder.Services.AddScoped<ISongService, SongService>();   
+builder.Services.AddScoped<IUserService, UserService>();  
+
 builder.Services.AddSignalR();
 
 // JWT Authentication

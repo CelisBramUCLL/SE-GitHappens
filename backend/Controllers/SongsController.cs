@@ -1,5 +1,6 @@
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Dotnet_test.Services;
 
 namespace Dotnet_test.Controllers
 {
@@ -7,11 +8,11 @@ namespace Dotnet_test.Controllers
     [ApiController]
     public class SongsController : ControllerBase
     {
-        private readonly ISongRepository _songRepository;
+        private readonly ISongService _songService;
 
-        public SongsController(ISongRepository songRepository)
+        public SongsController(ISongService songService)
         {
-            _songRepository = songRepository;
+            _songService = songService;
         }
 
         [HttpGet]
@@ -21,7 +22,7 @@ namespace Dotnet_test.Controllers
             [FromQuery] int pageSize = 20
         )
         {
-            var (songs, totalCount, totalPages) = await _songRepository.GetAll(
+            var (songs, totalCount, totalPages) = await _songService.GetAllAsync(
                 search,
                 page,
                 pageSize
@@ -42,7 +43,7 @@ namespace Dotnet_test.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var song = await _songRepository.GetById(id);
+            var song = await _songService.GetByIdAsync(id);
 
             if (song == null)
                 return NotFound();
@@ -59,7 +60,7 @@ namespace Dotnet_test.Controllers
             if (string.IsNullOrEmpty(query))
                 return BadRequest("Search query cannot be empty");
 
-            var songs = await _songRepository.Search(query, limit);
+            var songs = await _songService.SearchAsync(query, limit);
             return Ok(songs);
         }
     }
