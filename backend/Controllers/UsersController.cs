@@ -1,6 +1,7 @@
-﻿using Dotnet_test.Domain;
-using Dotnet_test.DTOs.User;
+﻿using Dotnet_test.DTOs.User;
 using Dotnet_test.Interfaces;
+using Dotnet_test.Services;      
+using Dotnet_test.Exceptions; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,86 +11,55 @@ namespace Dotnet_test.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
 
-        public UsersController(IUserRepository userRepository)
+        public UsersController(IUserService userService)
         {
-            _userRepository = userRepository;
+            _userService = userService;
         }
 
-        // Get all users
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var response = await _userRepository.GetAll();
-
+            var response = await _userService.GetAllAsync(); 
             return Ok(response);
         }
 
-        // Get user by ID
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
         {
-            var response = await _userRepository.GetById(id);
+            var response = await _userService.GetByIdAsync(id); 
 
+            if (response == null) return NotFound(); 
             return Ok(response);
         }
 
-        // Create new user
         [HttpPost]
         public async Task<IActionResult> CreateUser(CreateUserDTO request)
         {
             try
             {
-                var newUser = new User()
-                {
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
-                    Email = request.Email,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    Username = request.Username,
-                    Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
-                        ? parsedRole
-                        : Role.User,
-                };
+                var created = await _userService.CreateUserAsync(request);
 
-                var created = await _userRepository.Create(newUser);
-                return Ok(created);
+                return CreatedAtAction(nameof(GetUser), new { id = created.Id }, created);
             }
-            catch (InvalidOperationException ex)
-                when (ex.Message.Contains("email address already exists"))
+            catch (EmailAlreadyExistsException ex) 
             {
-                return BadRequest(
-                    new { message = "A user with this email address already exists" }
-                );
+                return BadRequest(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "An error occurred while creating the user" });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
-        // Update user
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDTO request)
         {
-            var userToUpdate = new User
-            {
-                Id = id,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Email = request.Email,
-                PasswordHash = request.Password,
-                Username = request.Username,
-                Role = Enum.TryParse<Role>(request.Role, out var parsedRole)
-                    ? parsedRole
-                    : Role.User,
-            };
-
-            var updated = await _userRepository.Update(userToUpdate, request);
+            var updated = await _userService.UpdateUserAsync(id, request);
 
             if (updated == null)
                 return NotFound("User not found");
@@ -97,12 +67,11 @@ namespace Dotnet_test.Controllers
             return Ok(updated);
         }
 
-        // Delete user by ID
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var deleted = await _userRepository.Delete(id);
+            var deleted = await _userService.DeleteUserAsync(id); 
 
             if (!deleted)
                 return NotFound($"User with id {id} not found");
@@ -110,11 +79,11 @@ namespace Dotnet_test.Controllers
             return Ok($"User with id {id} deleted");
         }
 
-        // User login
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] LoginDTO dto)
         {
-            var result = await _userRepository.Login(dto);
+            var result = await _userService.LoginAsync(dto);
+            
             if (result == null)
                 return Unauthorized(new { message = "Invalid email or password" });
 
