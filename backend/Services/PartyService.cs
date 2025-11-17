@@ -2,6 +2,7 @@ using Dotnet_test.Domain;
 using Dotnet_test.DTOs.Participant;
 using Dotnet_test.DTOs.Party;
 using Dotnet_test.DTOs.Song;
+using Dotnet_test.DTOs.Playlist;
 using Dotnet_test.Hubs;
 using Dotnet_test.Interfaces;
 using Microsoft.AspNetCore.SignalR;
@@ -19,12 +20,12 @@ namespace Dotnet_test.Services
             _hubContext = hubContext;
         }
 
-        public async Task<IEnumerable<Party>> GetAllAsync()
+        public async Task<IEnumerable<PartyDTO>> GetAllAsync()
         {
             return await _partyRepository.GetAll();
         }
 
-        public async Task<Party> GetByIdAsync(int id)
+        public async Task<PartyDTO> GetByIdAsync(int id)
         {
             return await _partyRepository.GetById(id);
         }
@@ -54,7 +55,7 @@ namespace Dotnet_test.Services
             }
         }
 
-        public async Task<Party> UpdatePartyAsync(int id, UpdatePartyDTO dto)
+        public async Task<PartyDTO> UpdatePartyAsync(int id, UpdatePartyDTO dto)
         {
             var party = new Party { Id = id };
             return await _partyRepository.Update(party, dto);
@@ -75,7 +76,7 @@ namespace Dotnet_test.Services
             return await _partyRepository.Delete(id);
         }
 
-        public async Task<Participant> JoinPartyAsync(JoinPartyDTO dto, int userId)
+        public async Task<ParticipantDTO> JoinPartyAsync(JoinPartyDTO dto, int userId)
         {
             var participant = await _partyRepository.JoinParty(dto, userId);
 
@@ -86,7 +87,7 @@ namespace Dotnet_test.Services
             return participant;
         }
 
-        public async Task<Participant> LeavePartyAsync(int partyId, int userId)
+        public async Task<ParticipantInPartyDTO> LeavePartyAsync(int partyId, int userId)
         {
             var participant = await _partyRepository.LeaveParty(partyId, userId);
             if (participant == null)
@@ -99,7 +100,7 @@ namespace Dotnet_test.Services
             return participant;
         }
 
-        public async Task<PlaylistSong> AddSongAsync(AddSongDTO dto, int userId)
+        public async Task<PlaylistSongDTO> AddSongAsync(AddSongDTO dto, int userId)
         {
             var currentParty = await _partyRepository.GetUserActiveParty(userId);
             if (currentParty == null)
@@ -114,7 +115,7 @@ namespace Dotnet_test.Services
             return playlistSong;
         }
 
-        public async Task<PlaylistSong> RemoveSongAsync(RemoveSongDTO dto, int userId)
+        public async Task<PlaylistSongDTO> RemoveSongAsync(RemoveSongDTO dto, int userId)
         {
             var currentParty = await _partyRepository.GetUserActiveParty(userId);
             if (currentParty == null)
@@ -129,7 +130,7 @@ namespace Dotnet_test.Services
             return playlistSong;
         }
 
-        public async Task<Party> GetMyActivePartyAsync(int userId)
+        public async Task<PartyDTO> GetMyActivePartyAsync(int userId)
         {
             return await _partyRepository.GetUserActiveParty(userId);
         }
