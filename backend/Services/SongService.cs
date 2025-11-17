@@ -1,5 +1,7 @@
 using Dotnet_test.Domain;
 using Dotnet_test.Interfaces;
+using Dotnet_test.DTOs.Song;
+
 
 namespace Dotnet_test.Services
 {
@@ -12,19 +14,19 @@ namespace Dotnet_test.Services
             _songRepository = songRepository;
         }
 
-        public async Task<(IEnumerable<Song> songs, int totalCount, int totalPages)> GetAllAsync(
+        public async Task<(IEnumerable<SongDTO> songs, int totalCount, int totalPages)> GetAllAsync(
             string? search, int page, int pageSize
         )
         {
             return await _songRepository.GetAll(search, page, pageSize);
         }
 
-        public async Task<Song> GetByIdAsync(int id)
+        public async Task<SongDTO> GetByIdAsync(int id)
         {
             return await _songRepository.GetById(id);
         }
 
-        public async Task<IEnumerable<Song>> SearchAsync(string query, int limit)
+        public async Task<IEnumerable<SongDTO>> SearchAsync(string query, int limit)
         {
             return await _songRepository.Search(query, limit);
         }
