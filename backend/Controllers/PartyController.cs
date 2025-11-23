@@ -16,7 +16,7 @@ namespace Dotnet_test.Controllers
 
         public PartyController(IPartyService partyService)
         {
-            _partyService = partyService;
+            _partyService = partyService ?? throw new ArgumentNullException(nameof(partyService));
         }
 
         [HttpGet]
