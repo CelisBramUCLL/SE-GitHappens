@@ -11,7 +11,7 @@ namespace Dotnet_test.Repository
 
         public SongRepository(ApplicationDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public async Task<(List<SongDTO> songs, int totalCount, int totalPages)> GetAll(

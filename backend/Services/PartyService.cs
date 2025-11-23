@@ -16,8 +16,8 @@ namespace Dotnet_test.Services
 
         public PartyService(IPartyRepository partyRepository, IHubContext<PartyHub> hubContext)
         {
-            _partyRepository = partyRepository;
-            _hubContext = hubContext;
+            _partyRepository = partyRepository ?? throw new ArgumentNullException(nameof(partyRepository));
+            _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         }
 
         public async Task<IEnumerable<PartyDTO>> GetAllAsync()

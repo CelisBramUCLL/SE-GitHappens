@@ -1,0 +1,16 @@
+# Test/coverage output
+TestResults/
+.coverage
+coverage.cobertura.xml
+coverage.json
+coverage.xml
+coverage-report/
+*.coverage
+*.info
+*.trx
+
+# VS / .NET build junk
+bin/
+obj/
+
+# JetBrains /

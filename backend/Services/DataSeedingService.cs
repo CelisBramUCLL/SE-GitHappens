@@ -11,8 +11,8 @@ namespace Dotnet_test.Services
 
         public DataSeedingService(ApplicationDbContext context, ILogger<DataSeedingService> logger)
         {
-            _context = context;
-            _logger = logger;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task SeedSongsFromCsvAsync(string csvFilePath)
