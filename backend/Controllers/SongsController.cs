@@ -12,7 +12,7 @@ namespace Dotnet_test.Controllers
 
         public SongsController(ISongService songService)
         {
-            _songService = songService;
+            _songService = songService ?? throw new ArgumentNullException(nameof(songService));
         }
 
         [HttpGet]

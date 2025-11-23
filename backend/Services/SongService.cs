@@ -11,7 +11,7 @@ namespace Dotnet_test.Services
 
         public SongService(ISongRepository songRepository)
         {
-            _songRepository = songRepository;
+            _songRepository = songRepository ?? throw new ArgumentNullException(nameof(songRepository));
         }
 
         public async Task<(IEnumerable<SongDTO> songs, int totalCount, int totalPages)> GetAllAsync(

@@ -18,8 +18,8 @@ namespace Dotnet_test.Repository
 
         public UserRepository(ApplicationDbContext context, IConfiguration configuration)
         {
-            _context = context;
-            _configuration = configuration;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         public async Task<User> Create(User user)

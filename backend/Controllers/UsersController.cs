@@ -15,7 +15,7 @@ namespace Dotnet_test.Controllers
 
         public UsersController(IUserService userService)
         {
-            _userService = userService;
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
         [Authorize]

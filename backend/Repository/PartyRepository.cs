@@ -16,7 +16,7 @@ namespace Dotnet_test.Repository
 
         public PartyRepository(ApplicationDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public async Task<PartyDTO> Create(Party party)

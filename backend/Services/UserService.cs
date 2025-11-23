@@ -12,7 +12,7 @@ namespace Dotnet_test.Services
 
         public UserService(IUserRepository userRepository)
         {
-            _userRepository = userRepository;
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
