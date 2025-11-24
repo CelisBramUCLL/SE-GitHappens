@@ -11,29 +11,28 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Dotnet_test.Repository
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : GenericRepository<User, int>, IUserRepository
     {
-        private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
 
         public UserRepository(ApplicationDbContext context, IConfiguration configuration)
+            : base(context) // Call the generic repository constructor
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _configuration =
+                configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         public async Task<User> Create(User user)
         {
-            // Check if email already exists
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            // Check if email already exists (business logic specific to User)
+            var existingUser = await _dbSet.FirstOrDefaultAsync(u => u.Email == user.Email);
             if (existingUser != null)
                 throw new InvalidOperationException(
                     "A user with this email address already exists"
                 );
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return user;
+            // Use inherited generic method
+            return await AddAsync(user);
         }
 
         public async Task<bool> Delete(int id)
@@ -77,12 +76,15 @@ namespace Dotnet_test.Repository
 
         public async Task<List<User>> GetAll()
         {
-            return await _context.Users.ToListAsync();
+            // Use inherited generic method
+            var users = await GetAllAsync();
+            return users.ToList();
         }
 
         public async Task<User?> GetById(int id)
         {
-            return await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
+            // Use inherited generic method
+            return await GetByIdAsync(id);
         }
 
         public async Task<User?> Update(User user, UpdateUserDTO request)

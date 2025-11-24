@@ -5,14 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dotnet_test.Repository
 {
-    public class SongRepository : ISongRepository
+    public class SongRepository : GenericRepository<Domain.Song, int>, ISongRepository
     {
-        private readonly ApplicationDbContext _context;
-
         public SongRepository(ApplicationDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
+            : base(context) { }
 
         public async Task<(List<SongDTO> songs, int totalCount, int totalPages)> GetAll(
             string? search = null,
@@ -59,20 +55,21 @@ namespace Dotnet_test.Repository
 
         public async Task<SongDTO?> GetById(int id)
         {
-            var song = await _context
-                .Songs.Where(s => s.Id == id)
-                .Select(s => new SongDTO
-                {
-                    Id = s.Id,
-                    Title = s.Title,
-                    Artist = s.Artist,
-                    Album = s.Album,
-                    Duration = s.Duration,
-                    FilePath = s.FilePath,
-                })
-                .FirstOrDefaultAsync();
+            // Use inherited generic method instead of manual query
+            var song = await GetByIdAsync(id);
 
-            return song;
+            if (song == null)
+                return null;
+
+            return new SongDTO
+            {
+                Id = song.Id,
+                Title = song.Title,
+                Artist = song.Artist,
+                Album = song.Album,
+                Duration = song.Duration,
+                FilePath = song.FilePath,
+            };
         }
 
         public async Task<List<SongDTO>> Search(string query, int limit = 10)
