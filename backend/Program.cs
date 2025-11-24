@@ -62,7 +62,7 @@ builder.Services.AddScoped<IPartyService, PartyService>();
 builder.Services.AddScoped<ISongService, SongService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-// Register Active User Service as Singleton (shared state across all requests)
+// Register Active User Service as Singleton
 builder.Services.AddSingleton<IActiveUserService, ActiveUserService>();
 
 builder.Services.AddSignalR();

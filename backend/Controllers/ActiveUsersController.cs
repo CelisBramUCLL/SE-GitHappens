@@ -15,9 +15,6 @@ namespace Dotnet_test.Controllers
                 activeUserService ?? throw new ArgumentNullException(nameof(activeUserService));
         }
 
-        /// <summary>
-        /// Get the count of currently active users
-        /// </summary>
         [HttpGet("count")]
         public IActionResult GetActiveUserCount()
         {
@@ -25,9 +22,6 @@ namespace Dotnet_test.Controllers
             return Ok(new { activeUserCount = count });
         }
 
-        /// <summary>
-        /// Get all active user IDs (requires authentication)
-        /// </summary>
         [HttpGet("users")]
         public IActionResult GetActiveUsers()
         {
@@ -35,9 +29,6 @@ namespace Dotnet_test.Controllers
             return Ok(new { activeUsers = activeUserIds, count = activeUserIds.Count() });
         }
 
-        /// <summary>
-        /// Check if a specific user is active
-        /// </summary>
         [HttpGet("users/{userId}/status")]
         public IActionResult CheckUserStatus(int userId)
         {

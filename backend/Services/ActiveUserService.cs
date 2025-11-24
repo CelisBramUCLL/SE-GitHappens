@@ -3,9 +3,6 @@ using Dotnet_test.Interfaces;
 
 namespace Dotnet_test.Services
 {
-    /// <summary>
-    /// Thread-safe service for tracking active users using ConcurrentDictionary
-    /// </summary>
     public class ActiveUserService : IActiveUserService
     {
         // Primary mapping: UserId -> ConnectionId
