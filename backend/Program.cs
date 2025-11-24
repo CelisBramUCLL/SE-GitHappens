@@ -58,9 +58,12 @@ builder.Services.AddScoped<ISongRepository, SongRepository>();
 // Register services
 builder.Services.AddScoped<DataSeedingService>();
 
-builder.Services.AddScoped<IPartyService, PartyService>(); 
-builder.Services.AddScoped<ISongService, SongService>();   
-builder.Services.AddScoped<IUserService, UserService>();  
+builder.Services.AddScoped<IPartyService, PartyService>();
+builder.Services.AddScoped<ISongService, SongService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// Register Active User Service as Singleton
+builder.Services.AddSingleton<IActiveUserService, ActiveUserService>();
 
 builder.Services.AddSignalR();
 
@@ -84,6 +87,24 @@ builder
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
             ),
+        };
+
+        // Configure JWT for SignalR
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                // If the request is for our hub and we have an access token
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/partyHub"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
         };
     });
 
