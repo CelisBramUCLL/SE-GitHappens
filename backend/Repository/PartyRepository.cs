@@ -10,14 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dotnet_test.Repository
 {
-    public class PartyRepository : IPartyRepository
+    public class PartyRepository : GenericRepository<Party, int>, IPartyRepository
     {
-        private readonly ApplicationDbContext _context;
-
         public PartyRepository(ApplicationDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
+            : base(context) { }
 
         public async Task<PartyDTO> Create(Party party)
         {
@@ -39,9 +35,8 @@ namespace Dotnet_test.Repository
             if (existingParticipation != null)
                 throw new Exception("User is already participating in an active party");
 
-            // Add party to the database
-            _context.Parties.Add(party);
-            await _context.SaveChangesAsync();
+            // Add party to the database using inherited generic method
+            await AddAsync(party);
 
             // Create playlist for the party
             var playlist = new Playlist { Name = $"{party.Name} Playlist", PartyId = party.Id };
@@ -97,13 +92,8 @@ namespace Dotnet_test.Repository
 
         public async Task<bool> Delete(int id)
         {
-            var party = await _context.Parties.FirstOrDefaultAsync(x => x.Id == id);
-            if (party == null)
-                return false;
-
-            _context.Parties.Remove(party);
-            await _context.SaveChangesAsync();
-            return true;
+            // Use inherited generic method instead of manual query and delete
+            return await DeleteAsync(id);
         }
 
         public async Task<List<PartyDTO>> GetAll()

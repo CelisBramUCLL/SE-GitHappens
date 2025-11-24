@@ -50,10 +50,13 @@ builder.Services.AddCors(p =>
     )
 );
 
-// Register repositories
+// Register repositories (Updated to inherit from Generic Repository)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPartyRepository, PartyRepository>();
 builder.Services.AddScoped<ISongRepository, SongRepository>();
+
+// Register Generic Repository (for direct usage if needed)
+builder.Services.AddScoped(typeof(GenericRepository<,>));
 
 // Register services
 builder.Services.AddScoped<DataSeedingService>();
