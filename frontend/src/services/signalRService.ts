@@ -25,7 +25,12 @@ class SignalRService {
       .withUrl(`${baseUrl}/partyHub`, {
         withCredentials: true, // Enable credentials for CORS
         skipNegotiation: false,
-        transport: undefined
+        transport: undefined,
+        accessTokenFactory: () => {
+          // Send JWT token for authentication
+          const token = localStorage.getItem('token');
+          return token || '';
+        }
       })
       .configureLogging(LogLevel.Information)
       .withAutomaticReconnect([0, 2000, 10000, 30000]) // Auto-reconnect with backoff
@@ -137,6 +142,10 @@ class SignalRService {
     this.connection?.on('PartyDeletedGlobal', callback);
   }
 
+  // Active user count event handler
+  onActiveUserCountUpdated(callback: (count: number) => void): void {
+    this.connection?.on('ActiveUserCountUpdated', callback);
+  }
 
   off(eventName: string): void {
     this.connection?.off(eventName);

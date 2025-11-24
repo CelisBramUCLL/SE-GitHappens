@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Music, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ActiveUserCounter } from "../components/ActiveUserCounter";
 
 export const DashboardLayout = () => {
   const { user, logout } = useAuth();
@@ -46,6 +47,7 @@ export const DashboardLayout = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <ActiveUserCounter />
               <span className="text-gray-700 text-sm">
                 Welcome, {user?.username}
               </span>

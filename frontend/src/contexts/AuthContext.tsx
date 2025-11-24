@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User, LoginDTO, CreateUserDTO } from '../types';
 import { authService } from '../services/auth.service';
+import { signalRService } from '../services/signalRService';
 
 interface AuthContextType {
   user: User | null;
@@ -35,7 +36,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     if (token && userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        
+        // Auto-connect to SignalR when user is authenticated on load
+        signalRService.connect().catch((error) => {
+          console.error('Failed to connect to SignalR on app load:', error);
+        });
       } catch (error) {
         console.error('Error parsing user data:', error);
         localStorage.removeItem('token');
@@ -61,6 +68,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
+      
+      // Connect to SignalR after successful login
+      signalRService.connect().catch((error) => {
+        console.error('Failed to connect to SignalR after login:', error);
+      });
     } catch (error) {
       throw error;
     }
@@ -77,6 +89,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('token', loginResponse.token);
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
+      
+      // Connect to SignalR after successful registration
+      signalRService.connect().catch((error) => {
+        console.error('Failed to connect to SignalR after registration:', error);
+      });
     } catch (error) {
       throw error;
     }
@@ -86,6 +103,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    
+    // Disconnect from SignalR on logout
+    signalRService.disconnect().catch((error) => {
+      console.error('Failed to disconnect from SignalR on logout:', error);
+    });
   };
 
   const value = {
