@@ -32,7 +32,6 @@ namespace Backend.Tests.Hubs
             ctx.Setup(c => c.ConnectionId).Returns("conn-1");
             _context = ctx.Object;
 
-            // Pass the required dependencies to the constructor
             _hub = new PartyHub(_activeUserServiceMock.Object, _loggerMock.Object)
             {
                 Clients = _clientsMock.Object,

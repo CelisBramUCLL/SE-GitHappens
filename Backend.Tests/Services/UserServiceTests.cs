@@ -25,27 +25,21 @@ namespace Backend.Tests.Services
         [Fact]
         public void Constructor_ShouldInitialize_WithRepository()
         {
-            // Arrange
             var mockRepo = new Mock<IUserRepository>();
 
-            // Act
             var service = new UserService(mockRepo.Object);
 
-            // Assert
             service.Should().NotBeNull();
         }
 
         [Fact]
         public async Task GetAllAsync_ShouldReturnUsers()
         {
-            // Arrange
             var users = new List<User> { new() { Id = 1, Email = "a@test.com" } };
             _repoMock.Setup(r => r.GetAll()).ReturnsAsync(users);
 
-            // Act
             var result = await _service.GetAllAsync();
 
-            // Assert
             result.Should().BeEquivalentTo(users);
             _repoMock.Verify(r => r.GetAll(), Times.Once);
         }
@@ -53,14 +47,11 @@ namespace Backend.Tests.Services
         [Fact]
         public async Task GetByIdAsync_ShouldReturnUser()
         {
-            // Arrange
             var user = new User { Id = 42, Email = "a@test.com" };
             _repoMock.Setup(r => r.GetById(42)).ReturnsAsync(user);
 
-            // Act
             var result = await _service.GetByIdAsync(42);
 
-            // Assert
             result.Should().Be(user);
             _repoMock.Verify(r => r.GetById(42), Times.Once);
         }
@@ -92,7 +83,6 @@ namespace Backend.Tests.Services
         [Fact]
         public async Task CreateUserAsync_ShouldCallRepositoryCreate_And_ReturnCreatedUser()
         {
-            // Arrange
             var dto = new CreateUserDTO
             {
                 FirstName = "F",
@@ -105,10 +95,8 @@ namespace Backend.Tests.Services
             var createdUser = new User { Id = 1, Email = dto.Email };
             _repoMock.Setup(r => r.Create(It.IsAny<User>())).ReturnsAsync(createdUser);
 
-            // Act
             var result = await _service.CreateUserAsync(dto);
 
-            // Assert
             result.Should().Be(createdUser);
             _repoMock.Verify(r => r.Create(It.Is<User>(u =>   
                 u.Email == dto.Email &&

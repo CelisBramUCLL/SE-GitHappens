@@ -1,21 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <DataCollectionRunSettings>
     <DataCollectors>
-      <DataCollector friendlyName="XPlat Code Coverage">
+      <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
-          <Format>cobertura</Format>
-
-
+          <Format>cobertura,opencover</Format>
           <Exclude>
-            [Dotnet-test]Dotnet_test.Migrations.*,
-            [Dotnet-test]Dotnet_test.Infrastructure.*,
-            [Dotnet-test]Dotnet_test.Hubs.*,
-            [Dotnet-test]Dotnet_test.Extensions.*,
-            [Dotnet-test]Dotnet_test.Services.DataSeedingService,
-            [Dotnet-test]Program
+            [backend.Migrations*]*
           </Exclude>
-
         </Configuration>
       </DataCollector>
     </DataCollectors>

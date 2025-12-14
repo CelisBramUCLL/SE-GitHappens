@@ -21,7 +21,6 @@ namespace Backend.Tests.Services
             _service = new SongService(_repoMock.Object);
         }
 
-        // ---------- Constructor tests ----------
 
         [Fact]
         public void Constructor_ShouldInitialize_WithRepository()
@@ -41,19 +40,15 @@ namespace Backend.Tests.Services
                 .WithParameterName("songRepository");
         }
 
-        // ---------- Method tests ----------
 
         [Fact]
         public async Task GetByIdAsync_ShouldReturnSong()
         {
-            // Arrange
             var song = new SongDTO { Id = 7, Title = "Track", Artist = "Band" };
             _repoMock.Setup(r => r.GetById(7)).ReturnsAsync(song);
 
-            // Act
             var result = await _service.GetByIdAsync(7);
 
-            // Assert
             result.Should().Be(song);
             _repoMock.Verify(r => r.GetById(7), Times.Once);
         }
@@ -61,7 +56,6 @@ namespace Backend.Tests.Services
         [Fact]
         public async Task SearchAsync_ShouldReturnListOfSongs()
         {
-            // Arrange
             var songs = new List<SongDTO>
             {
                 new() { Id = 1, Title = "Hello", Artist = "Artist" },
@@ -70,10 +64,8 @@ namespace Backend.Tests.Services
 
             _repoMock.Setup(r => r.Search("test", 5)).ReturnsAsync(songs);
 
-            // Act
             var result = await _service.SearchAsync("test", 5);
 
-            // Assert
             result.Should().BeEquivalentTo(songs);
             _repoMock.Verify(r => r.Search("test", 5), Times.Once);
         }
@@ -81,7 +73,6 @@ namespace Backend.Tests.Services
         [Fact]
         public async Task GetAllAsync_ShouldReturnPaginatedResults()
         {
-            // Arrange
             var expectedSongs = new List<SongDTO>
             {
                 new() { Id = 1, Title = "Song1", Artist = "A" }
@@ -90,10 +81,8 @@ namespace Backend.Tests.Services
                 .Setup(r => r.GetAll("rock", 2, 5))
                 .ReturnsAsync((expectedSongs, 10, 2));
 
-            // Act
             var (songs, totalCount, totalPages) = await _service.GetAllAsync("rock", 2, 5);
 
-            // Assert
             songs.Should().ContainSingle().Which.Title.Should().Be("Song1");
             totalCount.Should().Be(10);
             totalPages.Should().Be(2);
