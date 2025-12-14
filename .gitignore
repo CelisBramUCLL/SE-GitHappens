@@ -45,3 +45,7 @@ publish/
 TestResult*/
 *.coverage
 *.coveragexml
+
+# Sqlite Database
+*.db
+*.db-journal
