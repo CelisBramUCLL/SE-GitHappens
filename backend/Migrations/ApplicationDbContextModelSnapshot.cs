@@ -56,7 +56,16 @@ namespace Dotnet_test.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("CurrentPosition")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CurrentlyPlayingSongId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("HostUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsPlaying")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")

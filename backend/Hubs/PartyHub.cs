@@ -95,5 +95,39 @@ namespace Dotnet_test.Hubs
                 .Group($"Party_{partyId}")
                 .SendAsync("SongRemoved", songId, Context.ConnectionId);
         }
+
+        // Music playback control methods
+        public async Task PlaySong(int partyId, int songId, int position = 0)
+        {
+            await Clients
+                .Group($"Party_{partyId}")
+                .SendAsync("PlaySong", songId, position, Context.ConnectionId);
+        }
+
+        public async Task PauseSong(int partyId, int position)
+        {
+            await Clients
+                .Group($"Party_{partyId}")
+                .SendAsync("PauseSong", position, Context.ConnectionId);
+        }
+
+        public async Task SeekSong(int partyId, int position)
+        {
+            await Clients
+                .Group($"Party_{partyId}")
+                .SendAsync("SeekSong", position, Context.ConnectionId);
+        }
+
+        public async Task StopSong(int partyId)
+        {
+            await Clients.Group($"Party_{partyId}").SendAsync("StopSong", Context.ConnectionId);
+        }
+
+        public async Task SyncPlaybackState(int partyId, int? songId, bool isPlaying, int position)
+        {
+            await Clients
+                .Group($"Party_{partyId}")
+                .SendAsync("SyncPlaybackState", songId, isPlaying, position, Context.ConnectionId);
+        }
     }
 }

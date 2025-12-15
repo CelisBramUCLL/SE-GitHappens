@@ -19,5 +19,10 @@ namespace Dotnet_test.DTOs.Party
 
         public List<ParticipantInPartyDTO> Participants { get; set; } =
             new List<ParticipantInPartyDTO>();
+
+        // Music playback state
+        public int? CurrentlyPlayingSongId { get; set; }
+        public bool IsPlaying { get; set; } = false;
+        public int CurrentPosition { get; set; } = 0;
     }
 }

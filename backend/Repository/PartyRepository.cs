@@ -68,6 +68,9 @@ namespace Dotnet_test.Repository
                 Status = party.Status,
                 CreatedAt = party.CreatedAt,
                 UpdatedAt = party.UpdatedAt,
+                CurrentlyPlayingSongId = party.CurrentlyPlayingSongId,
+                IsPlaying = party.IsPlaying,
+                CurrentPosition = party.CurrentPosition,
                 HostUser = new HostUserDTO(hostUser.Id, hostUser.Username),
                 Participants = new List<ParticipantInPartyDTO>
                 {
@@ -92,7 +95,7 @@ namespace Dotnet_test.Repository
 
         public async Task<bool> Delete(int id)
         {
-            // Use inherited generic method instead of manual query and delete
+            // Use inherited generic method
             return await DeleteAsync(id);
         }
 
@@ -112,6 +115,9 @@ namespace Dotnet_test.Repository
                     Status = s.Status,
                     CreatedAt = s.CreatedAt,
                     UpdatedAt = s.UpdatedAt,
+                    CurrentlyPlayingSongId = s.CurrentlyPlayingSongId,
+                    IsPlaying = s.IsPlaying,
+                    CurrentPosition = s.CurrentPosition,
                     HostUser = new HostUserDTO(s.HostUser.Id, s.HostUser.Username),
                     Participants = s
                         .Participants.Select(p => new ParticipantInPartyDTO
@@ -170,6 +176,9 @@ namespace Dotnet_test.Repository
                 Status = party.Status,
                 CreatedAt = party.CreatedAt,
                 UpdatedAt = party.UpdatedAt,
+                CurrentlyPlayingSongId = party.CurrentlyPlayingSongId,
+                IsPlaying = party.IsPlaying,
+                CurrentPosition = party.CurrentPosition,
                 HostUser = new HostUserDTO(party.HostUser.Id, party.HostUser.Username),
                 Participants = party
                     .Participants.Select(p => new ParticipantInPartyDTO
@@ -246,6 +255,9 @@ namespace Dotnet_test.Repository
                 Status = partyInDb.Status,
                 CreatedAt = partyInDb.CreatedAt,
                 UpdatedAt = partyInDb.UpdatedAt,
+                CurrentlyPlayingSongId = partyInDb.CurrentlyPlayingSongId,
+                IsPlaying = partyInDb.IsPlaying,
+                CurrentPosition = partyInDb.CurrentPosition,
                 HostUser = new HostUserDTO(partyInDb.HostUser.Id, partyInDb.HostUser.Username),
                 Participants = partyInDb
                     .Participants.Select(p => new ParticipantInPartyDTO
@@ -506,6 +518,9 @@ namespace Dotnet_test.Repository
                 Status = party.Status,
                 CreatedAt = party.CreatedAt,
                 UpdatedAt = party.UpdatedAt,
+                CurrentlyPlayingSongId = party.CurrentlyPlayingSongId,
+                IsPlaying = party.IsPlaying,
+                CurrentPosition = party.CurrentPosition,
                 HostUser = new HostUserDTO(party.HostUser.Id, party.HostUser.Username),
                 Participants = party
                     .Participants.Select(p => new ParticipantInPartyDTO

@@ -1,16 +1,33 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useMusicPlayer } from "../contexts/MusicPlayerContext";
+import { useMusicPlayerSignalR } from "../hooks/useMusicPlayerSignalR";
 import { Music, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActiveUserCounter } from "../components/ActiveUserCounter";
+import { MusicPlayer } from "../components/MusicPlayer";
 
 export const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const musicPlayer = useMusicPlayer();
+  
+  // Set up global music player SignalR handlers
+  useMusicPlayerSignalR();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  // Wrapper functions for music player callbacks
+  const handlePlay = () => {
+    if (musicPlayer.currentSong) {
+      // Resume from current position without resetting to 0
+      musicPlayer.resume();
+    } else if (musicPlayer.playlist.length > 0) {
+      musicPlayer.play(musicPlayer.playlist[0]);
+    }
   };
 
   return (
@@ -64,9 +81,20 @@ export const DashboardLayout = () => {
           </div>
         </div>
       </nav>
-      <main className="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
+      <main className="mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 max-w-7xl">
         <Outlet />
       </main>
+      <MusicPlayer
+        currentSong={musicPlayer.currentSong}
+        playlist={musicPlayer.playlist}
+        isPlaying={musicPlayer.isPlaying}
+        onPlay={handlePlay}
+        onPause={musicPlayer.pause}
+        onNext={musicPlayer.next}
+        onPrevious={musicPlayer.previous}
+        onSeek={musicPlayer.seek}
+        externalPosition={musicPlayer.currentPosition}
+      />
     </div>
   );
 };
