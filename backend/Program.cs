@@ -113,6 +113,21 @@ builder
 
 var app = builder.Build();
 
+// Apply pending migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Error occurred while applying migrations");
+    }
+}
+
 // Seed database on startup
 if (app.Environment.IsDevelopment())
 {

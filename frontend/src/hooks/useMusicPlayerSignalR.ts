@@ -9,7 +9,7 @@ export const useMusicPlayerSignalR = () => {
   const { isConnected } = useSignalR();
   const handlersSetUp = useRef(false);
   
-  const musicPlayerRef = useRef(musicPlayer);
+  const musicPlayerRef = useRef(musicPlayer as any);
   const currentPartyIdRef = useRef(musicPlayer.currentPartyId);
   
   useEffect(() => {
@@ -40,7 +40,7 @@ export const useMusicPlayerSignalR = () => {
         const partyId = currentPartyIdRef.current;
         if (partyId) {
           try {
-            const party = await partyService.getById(partyId);
+            const party = await partyService.getById(partyId) as any;
             if (party?.playlist?.songs) {
               player.setPlaylist(party.playlist.songs);
               song = party.playlist.songs.find((s: any) => s.id === songId);
@@ -100,7 +100,7 @@ export const useMusicPlayerSignalR = () => {
       if (!partyId) return;
 
       try {
-        const party = await partyService.getById(partyId);
+        const party = await partyService.getById(partyId) as any;
         if (party?.playlist?.songs) {
           musicPlayerRef.current.setPlaylist(party.playlist.songs);
         }
@@ -114,7 +114,7 @@ export const useMusicPlayerSignalR = () => {
       if (!partyId) return;
 
       try {
-        const party = await partyService.getById(partyId);
+        const party = await partyService.getById(partyId) as any;
         if (party?.playlist?.songs) {
           musicPlayerRef.current.setPlaylist(party.playlist.songs);
         }
