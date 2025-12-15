@@ -1,11 +1,13 @@
 <RunSettings>
   <DataCollectionRunSettings>
     <DataCollectors>
-      <DataCollector friendlyName="XPlat code coverage">
+      <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura,opencover</Format>
           <Exclude>
-            [backend.Migrations*]*
+            [Dotnet_test.Migrations*]*
+            [Dotnet_test.DTOs*]*
+            [Dotnet_test.Program]* 
           </Exclude>
         </Configuration>
       </DataCollector>
