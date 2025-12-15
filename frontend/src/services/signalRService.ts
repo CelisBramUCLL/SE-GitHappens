@@ -147,6 +147,63 @@ class SignalRService {
     this.connection?.on('ActiveUserCountUpdated', callback);
   }
 
+  // Music playback control methods
+  async playSong(partyId: number, songId: number, position: number = 0): Promise<void> {
+    if (this.connection?.state === 'Connected') {
+      await this.connection.invoke('PlaySong', partyId, songId, position);
+      console.log(`🎵 Playing song ${songId} in party ${partyId}`);
+    }
+  }
+
+  async pauseSong(partyId: number, position: number): Promise<void> {
+    if (this.connection?.state === 'Connected') {
+      await this.connection.invoke('PauseSong', partyId, position);
+      console.log(`⏸️ Paused song in party ${partyId}`);
+    }
+  }
+
+  async seekSong(partyId: number, position: number): Promise<void> {
+    if (this.connection?.state === 'Connected') {
+      await this.connection.invoke('SeekSong', partyId, position);
+      console.log(`⏩ Seeking to ${position}s in party ${partyId}`);
+    }
+  }
+
+  async stopSong(partyId: number): Promise<void> {
+    if (this.connection?.state === 'Connected') {
+      await this.connection.invoke('StopSong', partyId);
+      console.log(`⏹️ Stopped song in party ${partyId}`);
+    }
+  }
+
+  async syncPlaybackState(partyId: number, songId: number | null, isPlaying: boolean, position: number): Promise<void> {
+    if (this.connection?.state === 'Connected') {
+      await this.connection.invoke('SyncPlaybackState', partyId, songId, isPlaying, position);
+      console.log(`🔄 Synced playback state in party ${partyId}`);
+    }
+  }
+
+  // Music playback event handlers
+  onPlaySong(callback: (songId: number, position: number, connectionId: string) => void): void {
+    this.connection?.on('playSong', callback);
+  }
+
+  onPauseSong(callback: (position: number, connectionId: string) => void): void {
+    this.connection?.on('pauseSong', callback);
+  }
+
+  onSeekSong(callback: (position: number, connectionId: string) => void): void {
+    this.connection?.on('seekSong', callback);
+  }
+
+  onStopSong(callback: (connectionId: string) => void): void {
+    this.connection?.on('stopSong', callback);
+  }
+
+  onSyncPlaybackState(callback: (songId: number | null, isPlaying: boolean, position: number, connectionId: string) => void): void {
+    this.connection?.on('syncPlaybackState', callback);
+  }
+
   off(eventName: string): void {
     this.connection?.off(eventName);
   }
@@ -154,6 +211,10 @@ class SignalRService {
 
   get isConnected(): boolean {
     return this.connection?.state === 'Connected';
+  }
+
+  get connectionId(): string | null {
+    return this.connection?.connectionId || null;
   }
 }
 

@@ -12,6 +12,11 @@ namespace Dotnet_test.Domain
         public int HostUserId { get; set; }
         public User HostUser { get; set; } = null!;
 
+        // Music playback state
+        public int? CurrentlyPlayingSongId { get; set; }
+        public bool IsPlaying { get; set; } = false;
+        public int CurrentPosition { get; set; } = 0; // Position in seconds
+
         // Navigation
         public ICollection<Participant> Participants { get; set; } = new List<Participant>();
         public Playlist Playlist { get; set; } = null!;

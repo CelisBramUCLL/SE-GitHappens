@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { partyService } from "../services/party.service";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { useMusicPlayer } from "../contexts/MusicPlayerContext";
 import { useSignalR } from "../hooks/useSignalR";
 import { signalRService } from "../services/signalRService";
 import { Button } from "../components/ui/button";
@@ -31,6 +32,9 @@ export const PartyDetailPage: React.FC = () => {
   const { isConnected } = useSignalR();
   const [listenersSetUp, setListenersSetUp] = useState<string | null>(null);
 
+  const musicPlayer = useMusicPlayer();
+  const partyDataRef = useRef<any>(null);
+
   const {
     data: party,
     isLoading,
@@ -43,10 +47,32 @@ export const PartyDetailPage: React.FC = () => {
 
   const partyData = party as any;
 
+  // Update ref whenever partyData changes
+  useEffect(() => {
+    partyDataRef.current = partyData;
+  }, [partyData]);
+
+  const isHost = partyData?.hostUser?.id === user?.id;
+  const isParticipant =
+    isHost ||
+    partyData?.participants?.some((p: any) => p.userName === user?.username);
+
+  useEffect(() => {
+    if (partyData?.playlist?.songs) {
+      musicPlayer.setPlaylist(partyData.playlist.songs);
+    }
+  }, [partyData?.playlist?.songs, musicPlayer]);
+
+  useEffect(() => {
+    if (id && isParticipant) {
+      musicPlayer.setCurrentPartyId(Number(id));
+    }
+  }, [id, isParticipant, musicPlayer]);
+
   useEffect(() => {
     if (!isConnected || !id) return;
 
-    if (listenersSetUp === id) return;
+    if (listenersSetUp === id && signalRService.isConnected) return;
 
     const handleUserJoined = (_userId: number, partyId: number) => {
       if (partyId === Number(id)) {
@@ -70,7 +96,10 @@ export const PartyDetailPage: React.FC = () => {
 
     const handlePartyDeleted = (partyId: number, hostUserId: number) => {
       if (partyId === Number(id)) {
-        // Only show toast if current user is not the host (who deleted the party)
+        signalRService.leaveParty(partyId);
+        musicPlayer.stop();
+        musicPlayer.setCurrentPartyId(null);
+        
         if (user?.id !== hostUserId) {
           toast.info("Party has been deleted by the host");
         }
@@ -78,7 +107,6 @@ export const PartyDetailPage: React.FC = () => {
       }
     };
 
-    // Set up event listeners first
     signalRService.onUserJoinedParty(handleUserJoined);
     signalRService.onUserLeftParty(handleUserLeft);
     signalRService.onSongAdded(handleSongAdded);
@@ -93,30 +121,14 @@ export const PartyDetailPage: React.FC = () => {
         try {
           if (signalRService.isConnected) {
             await signalRService.joinParty(Number(id));
-            console.log(
-              `Successfully joined party ${id} (attempt ${attempts + 1})`
-            );
             break;
-          } else {
-            console.log(
-              `SignalR not ready, waiting... (attempt ${attempts + 1})`
-            );
+            } else {
             await new Promise((resolve) => setTimeout(resolve, 200));
           }
         } catch (error) {
-          console.error(
-            `Failed to join party ${id} (attempt ${attempts + 1}):`,
-            error
-          );
           await new Promise((resolve) => setTimeout(resolve, 200));
         }
         attempts++;
-      }
-
-      if (attempts === maxAttempts) {
-        console.error(
-          `Failed to join party ${id} after ${maxAttempts} attempts`
-        );
       }
     };
 
@@ -124,10 +136,6 @@ export const PartyDetailPage: React.FC = () => {
 
     setListenersSetUp(id);
     return () => {
-      // Leave SignalR party group when leaving the page
-      if (id) {
-        signalRService.leaveParty(Number(id));
-      }
       signalRService.off("UserJoinedParty");
       signalRService.off("UserLeftParty");
       signalRService.off("SongAdded");
@@ -136,7 +144,7 @@ export const PartyDetailPage: React.FC = () => {
 
       setListenersSetUp(null);
     };
-  }, [isConnected, id]);
+    }, [isConnected, id]);
 
   const joinPartyMutation = useMutation({
     mutationFn: () => partyService.join(Number(id)),
@@ -153,6 +161,11 @@ export const PartyDetailPage: React.FC = () => {
     mutationFn: () => partyService.leave(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["party", id] });
+      if (id) {
+        signalRService.leaveParty(Number(id));
+      }
+      musicPlayer.stop();
+      musicPlayer.setCurrentPartyId(null);
       toast.success("Successfully left the party.");
     },
     onError: () => {
@@ -174,6 +187,11 @@ export const PartyDetailPage: React.FC = () => {
   const deletePartyMutation = useMutation({
     mutationFn: () => partyService.delete(Number(id)),
     onSuccess: () => {
+      if (id) {
+        signalRService.leaveParty(Number(id));
+      }
+      musicPlayer.stop();
+      musicPlayer.setCurrentPartyId(null);
       toast.success("Party stopped successfully.");
       navigate("/parties");
     },
@@ -206,6 +224,13 @@ export const PartyDetailPage: React.FC = () => {
     navigate("/songs");
   };
 
+  const handlePlaySongFromList = (song: any) => {
+    musicPlayer.setCurrentSong(song);
+    musicPlayer.setIsPlaying(true);
+    musicPlayer.setCurrentPosition(0);
+    signalRService.playSong(Number(id), song.id, 0);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -224,11 +249,6 @@ export const PartyDetailPage: React.FC = () => {
       </div>
     );
   }
-
-  const isHost = partyData?.hostUser?.id === user?.id;
-  const isParticipant =
-    isHost ||
-    partyData?.participants?.some((p: any) => p.userName === user?.username);
 
   return (
     <>
@@ -359,7 +379,12 @@ export const PartyDetailPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handlePlaySongFromList(song)}
+                            disabled={!isParticipant}
+                          >
                             <Play className="w-4 h-4" />
                           </Button>
                           {(isHost || isParticipant) && (
