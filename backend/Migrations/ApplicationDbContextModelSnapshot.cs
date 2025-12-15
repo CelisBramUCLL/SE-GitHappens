@@ -57,16 +57,16 @@ namespace Dotnet_test.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("CurrentPosition")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int?>("CurrentlyPlayingSongId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("HostUserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsPlaying")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
