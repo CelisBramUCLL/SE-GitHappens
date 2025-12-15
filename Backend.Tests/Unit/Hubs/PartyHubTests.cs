@@ -1,9 +1,9 @@
 using Xunit;
-using FluentAssertions;
 using Moq;
 using Microsoft.AspNetCore.SignalR;
 using Dotnet_test.Hubs;
-using System.Threading.Tasks;
+using Dotnet_test.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Tests.Hubs
 {
@@ -13,6 +13,8 @@ namespace Backend.Tests.Hubs
         private readonly Mock<IHubCallerClients> _clientsMock;
         private readonly Mock<IGroupManager> _groupsMock;
         private readonly Mock<IClientProxy> _groupProxyMock;
+        private readonly Mock<IActiveUserService> _activeUserServiceMock;
+        private readonly Mock<ILogger<PartyHub>> _loggerMock;
         private readonly HubCallerContext _context;
 
         public PartyHubTests()
@@ -20,17 +22,17 @@ namespace Backend.Tests.Hubs
             _clientsMock = new Mock<IHubCallerClients>();
             _groupsMock = new Mock<IGroupManager>();
             _groupProxyMock = new Mock<IClientProxy>();
+            _activeUserServiceMock = new Mock<IActiveUserService>();
+            _loggerMock = new Mock<ILogger<PartyHub>>();
 
-            // Setup Clients.Group(...) => groupProxyMock
             _clientsMock.Setup(c => c.Group(It.IsAny<string>()))
                         .Returns(_groupProxyMock.Object);
 
-            // Create fake Context with connection id
             var ctx = new Mock<HubCallerContext>();
             ctx.Setup(c => c.ConnectionId).Returns("conn-1");
             _context = ctx.Object;
 
-            _hub = new PartyHub
+            _hub = new PartyHub(_activeUserServiceMock.Object, _loggerMock.Object)
             {
                 Clients = _clientsMock.Object,
                 Groups = _groupsMock.Object,

@@ -39,7 +39,6 @@ namespace Backend.Tests.Services
             _service = new PartyService(_repoMock.Object, _hubMock.Object);
         }
 
-        // ---------- Constructor ----------
         [Fact]
         public void Constructor_ShouldInitialize_Properly()
         {
@@ -57,7 +56,6 @@ namespace Backend.Tests.Services
             act2.Should().Throw<ArgumentNullException>();
         }
 
-        // ---------- Simple repository pass-through tests ----------
         [Fact]
         public async Task GetAllAsync_ShouldReturnRepositoryData()
         {
@@ -82,7 +80,6 @@ namespace Backend.Tests.Services
             _repoMock.Verify(r => r.GetById(1), Times.Once);
         }
 
-        // ---------- Create ----------
         [Fact]
         public async Task CreatePartyAsync_ShouldCallRepository_AndBroadcast()
         {
@@ -102,7 +99,6 @@ namespace Backend.Tests.Services
             ), Times.Once);
         }
 
-        // ---------- Update ----------
         [Fact]
         public async Task UpdatePartyAsync_ShouldReturnUpdatedParty()
         {
@@ -116,7 +112,6 @@ namespace Backend.Tests.Services
             _repoMock.Verify(r => r.Update(It.Is<Party>(p => p.Id == 2), dto), Times.Once);
         }
 
-        // ---------- Delete ----------
         [Fact]
         public async Task DeletePartyAsync_ShouldReturnTrue_AndBroadcast_WhenPartyExists()
         {
@@ -150,8 +145,7 @@ namespace Backend.Tests.Services
             _clientProxyMock.VerifyNoOtherCalls();
         }
 
-        // ---------- Join ----------
-        [Fact]
+      [Fact]
         public async Task JoinPartyAsync_ShouldCallRepo_AndBroadcast()
         {
             var dto = new JoinPartyDTO(1);
@@ -168,7 +162,6 @@ namespace Backend.Tests.Services
             ), Times.Once);
         }
 
-        // ---------- Leave ----------
         [Fact]
         public async Task LeavePartyAsync_ShouldReturnParticipant_AndBroadcast()
         {
@@ -195,7 +188,6 @@ namespace Backend.Tests.Services
             result.Should().BeNull();
         }
 
-        // ---------- Add song ----------
         [Fact]
         public async Task AddSongAsync_ShouldSendHubMessage_WhenUserInParty()
         {
@@ -229,7 +221,6 @@ namespace Backend.Tests.Services
                 .WithMessage("*no está en ninguna fiesta activa*");
         }
 
-        // ---------- Remove song ----------
         [Fact]
         public async Task RemoveSongAsync_ShouldSendHub_WhenUserInParty()
         {
@@ -262,8 +253,7 @@ namespace Backend.Tests.Services
             await act.Should().ThrowAsync<Exception>()
                 .WithMessage("*no está en ninguna fiesta activa*");
         }
-
-        // ---------- Active party ----------
+        
         [Fact]
         public async Task GetMyActivePartyAsync_ShouldReturnParty()
         {
